@@ -14,12 +14,6 @@ class raceTest(unittest.TestCase):
 		self.assertTrue(self.race.candidates == [candidate])
 		self.assertTrue(self.race.candidateVotes[candidate.number] == 0)
 
-	def testBallot(self):
-		senatorVotes = [1]
-		votes = {SENATOR: senatorVotes}
-		ballot = Ballot(votes)
-		self.assertTrue(ballot.votes[SENATOR] == [1])
-
 	def testApplyBallot(self):
 		test_race = Race(SENATOR, self.candidate_list)
 
@@ -31,6 +25,26 @@ class raceTest(unittest.TestCase):
 		# Apply the ballot and check candidate #1 has 1 vote
 		test_race.applyBallot(ballot);
 		self.assertTrue(test_race.candidateVotes[1] == 1)
+	
+	def testNoCandidate(self):
+		test_race = Race(SENATOR, self.candidate_list)
+
+		senatorVotes = [1,2]
+		votes = {SENATOR: senatorVotes}
+		ballot = Ballot(votes)
+
+		self.assertRaises(ElectionError, test_race.applyBallot, ballot)
+
+class ballotTest(unittest.TestCase):
+	def testBallot(self):
+		senatorVotes = [1]
+		votes = {SENATOR: senatorVotes}
+		ballot = Ballot(votes)
+		self.assertTrue(ballot.votes[SENATOR] == [1])
+
+	def testNonexistantPosition(self):
+		votes = {123123: [1]}
+		self.assertRaises(BallotError, Ballot, votes)
 
 class candidateTest(unittest.TestCase):
 	def testCandidate(self):
