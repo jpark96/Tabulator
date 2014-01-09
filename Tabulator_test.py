@@ -46,6 +46,17 @@ class ballotTest(unittest.TestCase):
 		votes = {123123: [1]}
 		self.assertRaises(BallotError, Ballot, votes)
 
+class electionTest(unittest.TestCase):
+	def testLoadBallotsFromJSON(self):
+		election = Election()
+		election.loadBallotsFromJSONFile("sample_votes.json")
+		self.assertTrue(election.ballots != None)
+		firstVote = election.ballots[0];
+		self.assertTrue(firstVote.votes[SENATOR] == [1,2,3])
+		self.assertTrue(firstVote.votes[STUDENT_ADVOCATE] == [8])
+		fourthVote = election.ballots[3];
+		self.assertTrue(fourthVote.votes[1] == [])
+		
 class candidateTest(unittest.TestCase):
 	def testCandidate(self):
 		candidate = Candidate(1, "Alice", SENATOR)

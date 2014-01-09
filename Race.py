@@ -44,8 +44,18 @@ class Ballot:
 	def __init__(self, votes):
 		# Votes is a dictionary matching position to an array of candidate numbers.
 		# The position of the candidate number in the array refers to rank of the vote.
+		
+		# Check that all keys are valid
 		for position in votes.keys():
 			if position not in POSITIONS:
 				raise BallotError("Position " + str(position) + " not found!");
+
+		# Create keys if they no votes were assigned to that position
+		for position in POSITIONS:
+			if position not in votes.keys():
+				votes[position] = []
+
 		self.votes = votes
+
+	
 
