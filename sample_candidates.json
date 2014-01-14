@@ -1,0 +1,94 @@
+{
+	"senator": [
+		{
+			"number": "30",
+			"name": "Alton",
+			"party": "D"
+		},
+		{
+			"number": "31",
+			"name": "Maruchi",
+			"party": "R"
+		},
+		{
+			"number": "32",
+			"name": "Jambu",
+			"party": "L"
+		},
+		{
+			"number": "33",
+			"name": "Kyle",
+			"party": "L"
+		},
+		{
+			"number": "34",
+			"name": "Barney",
+			"party": "D"
+		}
+	],
+	"president": [
+		{
+			"number": "1",
+			"name": "Yun",
+			"party": "L"
+		},
+		{
+			"number": "2",
+			"name": "Shyam",
+			"party": "D"
+		}
+	],
+	"internal_vp": [
+		{
+			"number": "10",
+			"name": "Peter",
+			"party": "D"
+		}
+	],
+	"external_vp": [
+		{
+			"number": "15",
+			"name": "Anand",
+			"party": "R"
+		},
+		{
+			"number": "16",
+			"name": "Amanda",
+			"party": "L"
+		}
+	],
+	"academic_vp": [
+		{
+			"number": "20",
+			"name": "Emily",
+			"party": "L"
+		},
+		{
+			"number": "21",
+			"name": "Sarah",
+			"party": "L"
+		}
+	],
+	"student_advocate": [
+		{
+			"number": "25",
+			"name": "Steve",
+			"party": "L"
+		},
+			{
+			"number": "26",
+			"name": "Drew",
+			"party": "L"
+		},
+			{
+			"number": "27",
+			"name": "Bob",
+			"party": "D"
+		},
+			{
+			"number": "28",
+			"name": "John",
+			"party": "R"
+		}
+	]
+}
