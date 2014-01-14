@@ -5,12 +5,12 @@ from Race import *
 
 class raceTest(unittest.TestCase):
 	def setUp(self):
-		candidate = Candidate(1, "Alice", SENATOR)
+		candidate = Candidate(1, "Alice", SENATOR, "D")
 		self.candidate_list = [candidate]
 		self.race = Race(SENATOR, self.candidate_list)
 
 	def testRace(self):
-		candidate = Candidate(1, "Alice", SENATOR)
+		candidate = Candidate(1, "Alice", SENATOR, "D")
 		self.assertTrue(self.race.candidates == [candidate])
 		self.assertTrue(self.race.candidateVotes[candidate.number] == 0)
 
@@ -50,19 +50,33 @@ class electionTest(unittest.TestCase):
 	def testLoadBallotsFromJSON(self):
 		election = Election()
 		election.loadBallotsFromJSONFile("sample_votes.json")
-		self.assertTrue(election.ballots != None)
 		firstVote = election.ballots[0];
-		self.assertTrue(firstVote.votes[SENATOR] == [1,2,3])
-		self.assertTrue(firstVote.votes[STUDENT_ADVOCATE] == [8])
+		self.assertTrue(firstVote.votes[SENATOR] == [30,31,32])
+		self.assertTrue(firstVote.votes[STUDENT_ADVOCATE] == [25,26,28])
 		fourthVote = election.ballots[3];
 		self.assertTrue(fourthVote.votes[1] == [])
-		
+
+	def testLoadCandidatesFromJSON(self):
+		election = Election()
+		expected_senator = Candidate(30, "Alton", SENATOR, "D")
+		election.loadCandidatesFromJSONFile("sample_candidates.json")
+		self.assertTrue(election.candidates[SENATOR][0] == expected_senator)
+
+		expected_president = Candidate(1, "Yun", PRESIDENT, "L")
+		self.assertTrue(election.candidates[PRESIDENT][0] == expected_president)
+
+		expected_evp = Candidate(16, "Amanda", EXTERNAL_VP, "L")
+		self.assertTrue(election.candidates[EXTERNAL_VP][1] == expected_evp)
+
+		election.displayCandidates()
+
 class candidateTest(unittest.TestCase):
 	def testCandidate(self):
-		candidate = Candidate(1, "Alice", SENATOR)
+		candidate = Candidate(1, "Alice", SENATOR, "D")
 		self.assertTrue(candidate.name == "Alice")
 		self.assertTrue(candidate.number == 1)
 		self.assertTrue(candidate.position == SENATOR)
+		self.assertTrue(candidate.party == "D")
 
 def main():
 	unittest.main()
