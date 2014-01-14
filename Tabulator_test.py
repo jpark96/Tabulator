@@ -50,6 +50,7 @@ class electionTest(unittest.TestCase):
 	def testLoadBallotsFromJSON(self):
 		election = Election()
 		election.loadBallotsFromJSONFile("sample_votes.json")
+
 		firstVote = election.ballots[0];
 		self.assertTrue(firstVote.votes[SENATOR] == [30,31,32])
 		self.assertTrue(firstVote.votes[STUDENT_ADVOCATE] == [25,26,28])
@@ -68,7 +69,21 @@ class electionTest(unittest.TestCase):
 		expected_evp = Candidate(16, "Amanda", EXTERNAL_VP, "L")
 		self.assertTrue(election.candidates[EXTERNAL_VP][1] == expected_evp)
 
-		election.displayCandidates()
+	def testAbsoluteTally(self):	
+		election = Election()
+		election.loadBallotsFromJSONFile("sample_votes.json")
+
+		election.loadCandidatesFromJSONFile("sample_candidates.json")
+
+		candidate_result, score = election.tally(SENATOR)
+		expected_senator = Candidate(30, "Alton", SENATOR, "D")
+		self.assertTrue(candidate_result[0] == expected_senator)
+		self.assertTrue(score[0] == 3)
+
+		candidate_result, score = election.tally(STUDENT_ADVOCATE)
+		expected = Candidate(27, "Bob", STUDENT_ADVOCATE, "D")
+		self.assertTrue(candidate_result[1] == expected)
+		self.assertTrue(score[1] == 2)
 
 class candidateTest(unittest.TestCase):
 	def testCandidate(self):

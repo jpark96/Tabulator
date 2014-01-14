@@ -8,8 +8,13 @@ class Race:
 		self.position = position
 		self.candidates = candidates
 		self.candidateVotes = {}
+
+		# (HACK) Can't hash candidates, so temporarily use their candidate number as a key
+		self.candidateNumberToCandidate = {}
+		self.value = self.absolute_value
 		for candidate in candidates:
 			self.candidateVotes[candidate.number] = 0
+			self.candidateNumberToCandidate[candidate.number] = candidate
 
 	def applyBallot(self, ballot):
 		if self.position not in ballot.votes.keys():
@@ -20,13 +25,30 @@ class Race:
 				raise ElectionError("Candidate " + str(candidate_number) + " not found!")
 			self.candidateVotes[candidate_number] += self.value(i)
 
+	def results(self):
+		# Sorts the candidates based on their votes
+		number_and_votes = [(number, votes) for number, votes in self.candidateVotes.items()]
+		number_and_votes.sort(key=lambda x: -1*x[1])
+		
+		candidates_list = []
+		score_list = []
+		for number, votes in number_and_votes:
+			candidates_list.append(self.candidateNumberToCandidate[number])
+			score_list.append(votes)
+
+		return candidates_list, score_list
+
 	def displayResults(self):
 		for candidate in self.candidates:
 			print(str(candidate.number) + ". " + candidate.name + " " + str(self.candidateVotes[candidate.number]))
 
-	def value(self, rank):
+	def absolute_value(self,rank):
 		# The first vote in an array gets a value of 1
-		return rank + 1
+		return 1
+
+	def inverse_value(self, rank):
+		# Value of vote is inverse to its rank
+		return 1/(1+rank)
 
 class ElectionError(Exception):
 

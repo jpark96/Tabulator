@@ -19,7 +19,10 @@ class Candidate:
 class Election:
 
 	def __init__(self):
+		# self.ballots is an array of Ballot objects
 		self.ballots = []
+
+		# self.candidates is a dictionary mapping positions to an array of Candidate objects
 		self.candidates = {}
 
 	def loadBallotsFromJSONFile(self, filepath):
@@ -39,32 +42,29 @@ class Election:
 			self.ballots.append(ballot)
 
 	def loadCandidatesFromJSONFile(self, filepath):
-		self.ballots = []
 		with open(filepath) as data_file:
 			data = json.load(data_file)
 		self.candidates[SENATOR] = []
 		for candidate in data["senator"]:
-			self.candidates[SENATOR].append(Candidate(int(candidate["number"]), candidate["name"], SENATOR, candidate["party"]))
-
+			self.__addJSONCandidate__(candidate, SENATOR)
 		self.candidates[PRESIDENT] = []
 		for candidate in data["president"]:
-			self.candidates[PRESIDENT].append(Candidate(int(candidate["number"]), candidate["name"], PRESIDENT, candidate["party"]))
-
+			self.__addJSONCandidate__(candidate, PRESIDENT)
 		self.candidates[INTERNAL_VP] = []
 		for candidate in data["internal_vp"]:
-			self.candidates[INTERNAL_VP].append(Candidate(int(candidate["number"]), candidate["name"], INTERNAL_VP, candidate["party"]))
-
+			self.__addJSONCandidate__(candidate, INTERNAL_VP)
 		self.candidates[EXTERNAL_VP] = []
 		for candidate in data["external_vp"]:
-			self.candidates[EXTERNAL_VP].append(Candidate(int(candidate["number"]), candidate["name"], EXTERNAL_VP, candidate["party"]))
-
+			self.__addJSONCandidate__(candidate, EXTERNAL_VP)
 		self.candidates[ACADEMIC_VP] = []
 		for candidate in data["academic_vp"]:
-			self.candidates[ACADEMIC_VP].append(Candidate(int(candidate["number"]), candidate["name"], ACADEMIC_VP, candidate["party"]))
-
+			self.__addJSONCandidate__(candidate, ACADEMIC_VP)
 		self.candidates[STUDENT_ADVOCATE] = []
 		for candidate in data["student_advocate"]:
-			self.candidates[STUDENT_ADVOCATE].append(Candidate(int(candidate["number"]), candidate["name"], STUDENT_ADVOCATE, candidate["party"]))
+			self.__addJSONCandidate__(candidate, STUDENT_ADVOCATE)
+
+	def __addJSONCandidate__(self, candidate, position):
+		self.candidates[position].append(Candidate(int(candidate["number"]), candidate["name"], position, candidate["party"]))
 
 	def displayCandidates(self):
 		for position in self.candidates:
@@ -74,6 +74,17 @@ class Election:
 			for candidate in candidates:
 				print(candidate)
 			print("")
+
+	def tally(self, position):
+		candidates = self.candidates[position]
+		if not self.ballots: raise ElectionError("No ballots have been entered.")
+
+		race = Race(position, candidates)
+		for ballot in self.ballots:
+			race.applyBallot(ballot)
+
+		return race.results()		
+	
 
 
 
