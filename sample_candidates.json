@@ -26,19 +26,7 @@
 			"party": "D"
 		}
 	],
-	"president": [
-		{
-			"number": "1",
-			"name": "Yun",
-			"party": "L"
-		},
-		{
-			"number": "2",
-			"name": "Shyam",
-			"party": "D"
-		}
-	],
-	"internal_vp": [
+	"executive_vp": [
 		{
 			"number": "10",
 			"name": "Peter",
@@ -89,6 +77,18 @@
 			"number": "28",
 			"name": "John",
 			"party": "R"
+		}
+	],
+	"president": [
+		{
+			"number": "1",
+			"name": "Yun",
+			"party": "L"
+		},
+		{
+			"number": "2",
+			"name": "Shyam",
+			"party": "D"
 		}
 	]
 }

@@ -22,7 +22,7 @@ class Race:
 		votes = ballot.votes[self.position]
 		for i, candidate_number in enumerate(votes):
 			if candidate_number not in self.candidateVotes.keys():
-				raise ElectionError("Candidate " + str(candidate_number) + " not found!")
+				raise ElectionError("Candidate " + str(candidate_number) + " not found!" + str(self.candidateVotes.keys()))
 			self.candidateVotes[candidate_number] += self.value(i)
 
 	def results(self):

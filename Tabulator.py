@@ -50,9 +50,9 @@ class Election:
 		self.candidates[PRESIDENT] = []
 		for candidate in data["president"]:
 			self.__addJSONCandidate__(candidate, PRESIDENT)
-		self.candidates[INTERNAL_VP] = []
-		for candidate in data["internal_vp"]:
-			self.__addJSONCandidate__(candidate, INTERNAL_VP)
+		self.candidates[EXECUTIVE_VP] = []
+		for candidate in data["executive_vp"]:
+			self.__addJSONCandidate__(candidate, EXECUTIVE_VP)
 		self.candidates[EXTERNAL_VP] = []
 		for candidate in data["external_vp"]:
 			self.__addJSONCandidate__(candidate, EXTERNAL_VP)
@@ -82,7 +82,6 @@ class Election:
 		race = Race(position, candidates)
 		for ballot in self.ballots:
 			race.applyBallot(ballot)
-
 		return race.results()		
 	
 

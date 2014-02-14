@@ -53,9 +53,11 @@ class electionTest(unittest.TestCase):
 
 		firstVote = election.ballots[0];
 		self.assertTrue(firstVote.votes[SENATOR] == [30,31,32])
-		self.assertTrue(firstVote.votes[STUDENT_ADVOCATE] == [25,26,28])
+		self.assertTrue(firstVote.votes[STUDENT_ADVOCATE] == [25,26,27,28])
 		fourthVote = election.ballots[3];
 		self.assertTrue(fourthVote.votes[1] == [])
+
+		election.loadBallotsFromJSONFile("ballots.json")
 
 	def testLoadCandidatesFromJSON(self):
 		election = Election()
@@ -81,9 +83,9 @@ class electionTest(unittest.TestCase):
 		self.assertTrue(score[0] == 3)
 
 		candidate_result, score = election.tally(STUDENT_ADVOCATE)
-		expected = Candidate(27, "Bob", STUDENT_ADVOCATE, "D")
+		expected = Candidate(25, "Steve", STUDENT_ADVOCATE, "L")
 		self.assertTrue(candidate_result[1] == expected)
-		self.assertTrue(score[1] == 2)
+		self.assertTrue(score[1] == 1)
 
 class candidateTest(unittest.TestCase):
 	def testCandidate(self):
