@@ -2,28 +2,68 @@ from constants import *
 class Race:
 # A race refers to an election for one particular position
 
-	def __init__(self, position, candidates):
+	def __init__(self, position, candidates, ballots):
 		# Candidates is an array of Candidate objects
-		# CandidateVotes is a dictionary matching a candidate number to number of votes
+		# CandidateScore is a dictionary matching a candidate number to number of votes
 		self.position = position
 		self.candidates = candidates
-		self.candidateVotes = {}
+		self.ballots = ballots
+		self.validVotes = 0
 
 		# (HACK) Can't hash candidates, so temporarily use their candidate number as a key
-		self.candidateNumberToCandidate = {}
-		self.value = self.absolute_value
-		for candidate in candidates:
-			self.candidateVotes[candidate.number] = 0
-			self.candidateNumberToCandidate[candidate.number] = candidate
+		self.numToCandidate = {candidate.number: candidate for candidate in candidates}
 
 	def applyBallot(self, ballot):
 		if self.position not in ballot.votes.keys():
 			return
-		votes = ballot.votes[self.position]
-		for i, candidate_number in enumerate(votes):
-			if candidate_number not in self.candidateVotes.keys():
-				raise ElectionError("Candidate " + str(candidate_number) + " not found!" + str(self.candidateVotes.keys()))
-			self.candidateVotes[candidate_number] += self.value(i)
+		vote = ballot.votes[self.position]
+		candidate_num = vote.pop(0)
+		if candidate_num not in self.numToCandidate.keys():
+			raise ElectionError("Candidate " + str(candidate_num) + " not found!")
+
+		candidate = self.numToCandidate[candidate_num]
+		candidate.score += 1
+		candidate.ballots.append(ballot)
+
+	def initializeFirstVotes(self, ballot):
+		self.applyBallot(ballot)
+		self.validVotes += 1
+
+	def applyBallots(self):
+		# First pass
+		for ballot in self.ballots:
+			self.initializeFirstVotes(ballot)
+
+		# while(winners <)
+			self.checkQuota()
+			self.redistribute()
+
+		# See if any executive won through quota'ing
+		if self.position != SENATOR:
+			for candidate in self.candidates:
+				if candidate.state == WIN:
+					return
+
+
+
+	def redistribute(self):
+		self.candidates.sort(key=lambda x: x.score)
+		for candidate in self.candidates:
+			if candidate.state == RUNNING:
+				for ballot in candidate.ballots:
+					self.applyBallot(ballot)
+				candidate.state = LOSE
+				break
+
+	def checkQuota(self):
+		if self.position != SENATOR:
+			quota = self.validVotes/(NUM_SENATORS+1) + 1
+		else:
+			quota = (self.validVotes + 1)/2.0
+		for candidate in self.candidates:
+			if candidate.score >= quota:
+				candidate.state = WIN
+
 
 	def results(self):
 		# Sorts the candidates based on their votes
@@ -78,6 +118,9 @@ class Ballot:
 				votes[position] = []
 
 		self.votes = votes
+		self.value = 1
 
+	def setValue(self, val):
+		self.value = val
 	
 

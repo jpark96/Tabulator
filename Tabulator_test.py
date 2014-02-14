@@ -7,7 +7,7 @@ class raceTest(unittest.TestCase):
 	def setUp(self):
 		candidate = Candidate(1, "Alice", SENATOR, "D")
 		self.candidate_list = [candidate]
-		self.race = Race(SENATOR, self.candidate_list)
+		self.race = Race(SENATOR, self.candidate_list, [])
 
 	def testRace(self):
 		candidate = Candidate(1, "Alice", SENATOR, "D")
@@ -15,7 +15,7 @@ class raceTest(unittest.TestCase):
 		self.assertTrue(self.race.candidateVotes[candidate.number] == 0)
 
 	def testApplyBallot(self):
-		test_race = Race(SENATOR, self.candidate_list)
+		test_race = Race(SENATOR, self.candidate_list, [])
 
 		# Create a ballot with one vote for Senator candidate #1.
 		senatorVotes = [1]
@@ -25,9 +25,10 @@ class raceTest(unittest.TestCase):
 		# Apply the ballot and check candidate #1 has 1 vote
 		test_race.applyBallot(ballot);
 		self.assertTrue(test_race.candidateVotes[1] == 1)
+
 	
 	def testNoCandidate(self):
-		test_race = Race(SENATOR, self.candidate_list)
+		test_race = Race(SENATOR, self.candidate_list, [])
 
 		senatorVotes = [1,2]
 		votes = {SENATOR: senatorVotes}

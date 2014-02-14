@@ -9,12 +9,18 @@ class Candidate:
 		self.name = name
 		self.position = position
 		self.party = party
+		self.score = 0
+		self.ballots = []
+		self.state = RUNNING
 
 	def __eq__(self, other):
 		return (other.number == self.number) and (other.name == self.name) and (other.position == self.position) and (other.party == self.party)
 
 	def __str__(self):
 		return str(self.number) + ". " + self.name + " " + str(self.position) + " " + self.party
+
+	def __hash__(self):
+		return self.number
 
 class Election:
 
@@ -79,9 +85,9 @@ class Election:
 		candidates = self.candidates[position]
 		if not self.ballots: raise ElectionError("No ballots have been entered.")
 
-		race = Race(position, candidates)
-		for ballot in self.ballots:
-			race.applyBallot(ballot)
+		race = Race(position, candidates, self.ballots)
+		race.applyBallots()
+
 		return race.results()		
 	
 
