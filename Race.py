@@ -9,6 +9,7 @@ class Race:
 		self.candidates = candidates
 		self.ballots = ballots
 		self.validVotes = 0
+		self.winners = 0
 
 		# (HACK) Can't hash candidates, so temporarily use their candidate number as a key
 		self.numToCandidate = {candidate.number: candidate for candidate in candidates}
@@ -34,16 +35,15 @@ class Race:
 		for ballot in self.ballots:
 			self.initializeFirstVotes(ballot)
 
-		# while(winners <)
-			self.checkQuota()
-			self.redistribute()
-
 		# See if any executive won through quota'ing
 		if self.position != SENATOR:
 			for candidate in self.candidates:
 				if candidate.state == WIN:
 					return
 
+		while(self.winners <= 20):
+			self.checkQuota()
+			self.redistribute()
 
 
 	def redistribute(self):
@@ -63,6 +63,7 @@ class Race:
 		for candidate in self.candidates:
 			if candidate.score >= quota:
 				candidate.state = WIN
+				self.winners += 1
 
 
 	def results(self):
