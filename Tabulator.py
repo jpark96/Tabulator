@@ -86,7 +86,10 @@ class Election:
 		if not self.ballots: raise ElectionError("No ballots have been entered.")
 
 		race = Race(position, candidates, self.ballots)
-		race.applyBallots()
+		if position != SENATOR:
+			return race.applyBallotExecutives()
+		else:
+			race.applyBallot()
 
 		return race.results()		
 	
