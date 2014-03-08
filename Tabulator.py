@@ -17,7 +17,7 @@ class Candidate:
 		return (other.number == self.number) and (other.name == self.name) and (other.position == self.position) and (other.party == self.party)
 
 	def __str__(self):
-		return str(self.number) + ". " + self.name + " " + str(self.position) + " " + self.party
+		return str(self.number) + ". " + self.name + " " + str(self.position) + " " + self.party + " SCORE: " + str(self.score) + " STATE: " + STATES[self.state]
 
 	def __hash__(self):
 		return self.number
@@ -89,9 +89,8 @@ class Election:
 		if position != SENATOR:
 			return race.applyBallotExecutives()
 		else:
-			race.applyBallot()
+			return race.applyBallotSenator()
 
-		return race.results()		
 	
 
 

@@ -23,10 +23,10 @@ class Race:
 
 		count = 0
 		while self.winners < 1:
-			print("---------- count: " + str(count))
+			# print("---------- count: " + str(count))
 			count += 1
-			for candidate in self.candidates:
-				print(candidate.name + ": " + str(candidate.score));
+			# for candidate in self.candidates:
+			# 	print(candidate.name + ": " + str(candidate.score));
 			if self.numOfRunners() == 1:
 				for candidate in self.candidates:
 					if candidate.state == RUNNING:
@@ -53,17 +53,22 @@ class Race:
 			self.initializeFirstVotes(ballot)
 
 		quota = self.validVotes/(NUM_SENATORS+1) + 1
-
 		current_winners = []
-		current_runners = self.candidates.copy()
+		current_runners = self.candidates[:]
 		current_ballots = []
 
+
 		while True:
+			self.candidates.sort(key=lambda x: -1 * x.score)
+			# for candidate in self.candidates:
+			# 	print(candidate)
+			# raw_input()
 			if (len(current_winners) + len(current_runners)) <= NUM_SENATORS:
 				current_winners += current_runners
 				return current_winners
 
-			top_candidate = current_runners.sort(key=lambda x: x.score)[-1]
+			current_runners.sort(key=lambda x: x.score)
+			top_candidate = current_runners[-1]
 
 			if top_candidate.score >= quota:
 				top_candidate.state = WIN
@@ -72,7 +77,7 @@ class Race:
 				for ballot in top_candidate.ballots:
 					ballot.value = float(ballot.value + (top_candidate.score - quota))/top_candidate.score
 					current_ballots.append(ballot)
-			else if current_ballots:
+			elif current_ballots:
 				for ballot in current_ballots:
 					self.applyBallot(ballot)
 			else:
@@ -95,7 +100,7 @@ class Race:
 		while True:
 			if not vote:
 				return
-			candidate_num = vote.pop(0)
+			candidate_num = int(vote.pop(0))
 			if candidate_num not in self.numToCandidate.keys():
 				raise ElectionError("Candidate " + str(candidate_num) + " not found!")
 			if self.numToCandidate[candidate_num].state == RUNNING:
@@ -215,5 +220,8 @@ class Ballot:
 
 	def setValue(self, val):
 		self.value = val
+
+	def __str__(self):
+		return str(self.votes)
 	
 

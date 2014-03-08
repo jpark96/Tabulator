@@ -36,11 +36,26 @@ class raceTest(unittest.TestCase):
 
 	# 	self.assertRaises(ElectionError, test_race.applyBallot, ballot)
 
-	def testApplyBallotExecutive(self):
+	# def testApplyBallotExecutive(self):
+	# 	election = Election()
+	# 	election.loadBallotsFromJSONFile("sample_votes.json")
+	# 	election.loadCandidatesFromJSONFile("sample_candidates.json")
+	# 	self.assertTrue(election.tally(PRESIDENT).score == 3)
+
+	# def testExecutiveCandidates2013(self):
+	# 	election = Election()
+	# 	election.loadBallotsFromJSONFile("ballots.json")
+	# 	election.loadCandidatesFromJSONFile("candidates2013.json")
+	# 	for position in POSITIONS:
+	# 		if position != SENATOR:
+	# 			print(election.tally(position))
+
+	def testSenators2013(self):
 		election = Election()
-		election.loadBallotsFromJSONFile("sample_votes.json")
-		election.loadCandidatesFromJSONFile("sample_candidates.json")
-		self.assertTrue(election.tally(PRESIDENT).score == 3)
+		election.loadBallotsFromJSONFile("ballots.json")
+		election.loadCandidatesFromJSONFile("candidates2013.json")
+		for winner in election.tally(SENATOR):
+			print(winner)
 
 class ballotTest(unittest.TestCase):
 	def testBallot(self):
