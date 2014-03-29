@@ -54,7 +54,9 @@ class raceTest(unittest.TestCase):
 		election = Election()
 		election.loadBallotsFromJSONFile("ballots.json")
 		election.loadCandidatesFromJSONFile("candidates2013.json")
-		for winner in election.tally(SENATOR):
+		winners = election.tally(SENATOR)
+		# winners.sort(key=lambda x: -1 * x.score)
+		for winner in winners:
 			print(winner)
 
 class ballotTest(unittest.TestCase):
