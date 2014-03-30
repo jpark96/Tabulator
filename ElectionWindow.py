@@ -6,10 +6,13 @@ from Tabulator import *
 from constants import *
 from Race import *
 
+import time
+import thread
+
 class ElectionFrame(wx.Frame):
   
     def __init__(self, parent, title):
-        wx.Frame.__init__(self, parent, title=title, size=(500, 300))
+        wx.Frame.__init__(self, parent, title=title, size=(900, 680))
             
         self.InitUI()
         self.Centre()
@@ -49,12 +52,12 @@ class ElectionFrame(wx.Frame):
         backgroundPanel.SetBackgroundColour((200,200,200))
 
         # Load the candidates panel
-        self.election = Election()
+        self.election = Election(self)
         self.election.loadBallotsFromJSONFile("ballots.json")
         self.election.loadCandidatesFromJSONFile("candidates2013.json")
 
 
-        self.candidatesPanel = CandidatesPanel(backgroundPanel, self.election.candidates[SENATOR])
+        self.candidatesPanel = CandidatesPanel(backgroundPanel, self.election.candidates[PRESIDENT], self)
         self.candidatesPanel.SetBackgroundColour((240,240,240))
         backgroundPanel.GetSizer().Add(self.candidatesPanel, 1, wx.EXPAND | wx.ALL, 3)
 
@@ -64,20 +67,32 @@ class ElectionFrame(wx.Frame):
 
         backgroundPanel.GetSizer().Add(infoPanel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 3)
 
+        self.election.startRace(PRESIDENT)
+
     def OnQuit(self, e):
-        self.election.candidates[SENATOR][0].name = "sup"
-        self.candidatesPanel.refresh()
+        self.next()
+
+    def next(self):
+        status = self.election.iterateRace() 
+        if (status != CONTINUE):
+            return
+        else:
+            print("Iterating")
+            time.sleep(.001)
+            thread.start_new_thread(self.candidatesPanel.refresh, ())
+            # self.candidatesPanel.refresh
+
 
 class CandidatesPanel(scrolled.ScrolledPanel):
-    def __init__(self, parent, candidates):
+    def __init__(self, parent, candidates, frame):
         scrolled.ScrolledPanel.__init__(self, parent)
         self.SetSizer(wx.BoxSizer(wx.VERTICAL))
 
         # for i in range(len(candidates)):
         #     name = wx.StaticText(self, label=candidates[i])
         #     self.GetSizer().Add(name, 0, wx.ALL, 5)
-
-
+        self.frame = frame
+        self.candidates = candidates
         self.grid = gridlib.Grid(self)
         datasource = CandidatesTable(candidates)
         self.grid.SetTable(datasource)
@@ -95,7 +110,9 @@ class CandidatesPanel(scrolled.ScrolledPanel):
         # grid.EnableScrolling()
 
     def refresh(self):
-        self.grid.Refresh()
+        self.candidates.sort(key=lambda x: -1 * x.score)
+        self.grid.ForceRefresh()
+        self.frame.next()
 
 class CandidatesTable(wx.grid.PyGridTableBase):
     def __init__(self, candidates):

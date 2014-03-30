@@ -1,55 +1,68 @@
 from constants import *
 import math
+import time
 
 class Race:
 # A race refers to an election for one particular position
 
-	def __init__(self, position, candidates, ballots):
-		# Candidates is an array of Candidate objects
-		# CandidateScore is a dictionary matching a candidate number to number of votes
+	def __init__(self, election, position, candidates, ballots):
+		self.election = election
 		self.position = position
 		self.candidates = candidates
 		self.ballots = ballots
 		self.validVotes = 0
 		self.winners = 0
 		self.spentBallots = 0
+		self.iterationNumber = 0
+		
+		self.finished = False
+		self.current_ballots = ballots
+		self.redistribute_ballots = []
+		self.numValidVotes = self.countValidVotes(ballots)
+		self.quota = round((self.numValidVotes + 1)/2.0)
+		self.winner = []
 
 		# (HACK) Can't hash candidates, so temporarily use their candidate number as a key
 		self.numToCandidate = {candidate.number: candidate for candidate in candidates}
 
-	def applyBallotExecutives(self):
-		"""Run the elections for executive races"""
-		for ballot in self.ballots:
-			self.initializeFirstVotes(ballot)
-
-		quota = round((self.validVotes + 1)/2.0)
-		print(quota)
+	def countValidVotes(self, ballots):
 		count = 0
-		while self.winners < 1:
-			# print("---------- count: " + str(count))
-			count += 1
-			# for candidate in self.candidates:
-			# 	print(candidate.name + ": " + str(candidate.score));
-			if self.numOfRunners() == 1:
-				for candidate in self.candidates:
-					if candidate.state == RUNNING:
-						candidate.state = WIN
-						self.winners = 1
-						return candidate
+		for ballot in ballots:
+			if self.position not in ballot.votes.keys():
+				raise ElectionError("Position not found in ballot!")
+			vote = ballot.votes[self.position]
+			if vote:
+				count += 1
+		return count
 
-			for candidate in self.candidates:
-				if candidate.score >= quota:
-					candidate.state = WIN
-					self.winners = 1
-					return candidate
-
-			self.candidates.sort(key=lambda x: x.score)
+	def runStepExecutives(self):
+		if self.finished:
+			return FINISHED
+		if self.current_ballots:
+			ballot = self.current_ballots.pop(0)
+			if ballot.candidate:
+				ballot.candidate.score -= ballot.value
+			self.applyBallot(ballot)
+			return CONTINUE
+		elif self.numOfRunners() == 1:
 			for candidate in self.candidates:
 				if candidate.state == RUNNING:
-					for ballot in candidate.ballots:
-						self.applyBallot(ballot)
-					candidate.state = LOSE
-					break
+					candidate.state = WIN
+					self.finished = True
+					self.winner.append(candidate)
+					return FINISHED
+		for candidate in self.candidates:
+			if candidate.score >= self.quota:
+				candidate.state = WIN
+				self.finished = True
+				self.winner.append(candidate)
+				return FINISHED
+		self.candidates.sort(key=lambda x: -1 * x.score)
+		for candidate in reversed(self.candidates):
+			if candidate.state == RUNNING:
+				self.current_ballots += candidate.ballots
+				candidate.state = LOSE
+				return STOP
 
 	def applyBallotSenator(self):
 		for ballot in self.ballots:
@@ -68,7 +81,7 @@ class Race:
 				# print("Spent ballots: " + str(self.spentBallots))
 				current_runners.sort(key=lambda x: -1 * x.score)
 				current_winners += current_runners
-				return current_winners
+				yield current_winners
 
 			current_runners.sort(key=lambda x: x.score)
 			top_candidate = current_runners[-1]
@@ -86,15 +99,20 @@ class Race:
 			elif current_ballots:
 				while(current_ballots):
 					self.applyBallot(current_ballots.pop(0))
+					yield True
 			else:
+				print("Killing a candidate")
+				yield False
 				last_candidate = current_runners.pop(0)
 				for ballot in last_candidate.ballots:
 					self.applyBallot(ballot)
+					yield True
 				last_candidate.state = LOSE
+				last_candidate.score = 0
 				
 			if len(current_winners) == NUM_SENATORS:
 				print("Spent ballots: " + str(self.spentBallots))
-				return current_winners
+				yield current_winners
 
 
 
@@ -117,7 +135,9 @@ class Race:
 		candidate = self.numToCandidate[candidate_num]
 		candidate.score += ballot.value
 		candidate.ballots.append(ballot)
+		ballot.candidate = candidate
 		return True
+
 
 	def numOfRunners(self):
 		"""Return the number of candidates still running"""
@@ -222,6 +242,7 @@ class Ballot:
 			if position not in votes.keys():
 				votes[position] = []
 
+		self.candidate = None
 		self.votes = votes
 		self.value = 1
 

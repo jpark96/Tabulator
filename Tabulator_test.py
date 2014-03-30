@@ -4,10 +4,10 @@ from constants import *
 from Race import *
 
 class raceTest(unittest.TestCase):
-	def setUp(self):
-		candidate = Candidate(1, "Alice", SENATOR, "D")
-		self.candidate_list = [candidate]
-		self.race = Race(SENATOR, self.candidate_list, [])
+	# def setUp(self):
+	# 	candidate = Candidate(1, "Alice", SENATOR, "D")
+	# 	self.candidate_list = [candidate]
+	# 	self.race = Race(SENATOR, self.candidate_list, [])
 
 	# def testRace(self):
 	# 	candidate = Candidate(1, "Alice", SENATOR, "D")
@@ -50,14 +50,21 @@ class raceTest(unittest.TestCase):
 	# 		if position != SENATOR:
 	# 			print(election.tally(position))
 
-	def testSenators2013(self):
-		election = Election()
+	# def testSenators2013(self):
+	# 	election = Election()
+	# 	election.loadBallotsFromJSONFile("ballots.json")
+	# 	election.loadCandidatesFromJSONFile("candidates2013.json")
+	# 	winners = election.tally(SENATOR)
+	# 	# winners.sort(key=lambda x: -1 * x.score)
+	# 	for winner in winners:
+	# 		print(winner)
+
+	def testIteration(self):
+		election = Election(None)
 		election.loadBallotsFromJSONFile("ballots.json")
 		election.loadCandidatesFromJSONFile("candidates2013.json")
-		winners = election.tally(SENATOR)
-		# winners.sort(key=lambda x: -1 * x.score)
-		for winner in winners:
-			print(winner)
+		election.startRace(PRESIDENT)
+		election.finishRace()
 
 class ballotTest(unittest.TestCase):
 	def testBallot(self):
@@ -70,30 +77,30 @@ class ballotTest(unittest.TestCase):
 		votes = {123123: [1]}
 		self.assertRaises(BallotError, Ballot, votes)
 
-class electionTest(unittest.TestCase):
-	def testLoadBallotsFromJSON(self):
-		election = Election()
-		election.loadBallotsFromJSONFile("sample_votes.json")
+# class electionTest(unittest.TestCase):
+# 	def testLoadBallotsFromJSON(self):
+# 		election = Election()
+# 		election.loadBallotsFromJSONFile("sample_votes.json")
 
-		firstVote = election.ballots[0];
-		self.assertTrue(firstVote.votes[SENATOR] == [30,31,32])
-		self.assertTrue(firstVote.votes[STUDENT_ADVOCATE] == [25,26,27,28])
-		fourthVote = election.ballots[3];
-		self.assertTrue(fourthVote.votes[1] == [])
+# 		firstVote = election.ballots[0];
+# 		self.assertTrue(firstVote.votes[SENATOR] == [30,31,32])
+# 		self.assertTrue(firstVote.votes[STUDENT_ADVOCATE] == [25,26,27,28])
+# 		fourthVote = election.ballots[3];
+# 		self.assertTrue(fourthVote.votes[1] == [])
 
-		election.loadBallotsFromJSONFile("ballots.json")
+# 		election.loadBallotsFromJSONFile("ballots.json")
 
-	def testLoadCandidatesFromJSON(self):
-		election = Election()
-		expected_senator = Candidate(30, "Alton", SENATOR, "D")
-		election.loadCandidatesFromJSONFile("sample_candidates.json")
-		self.assertTrue(election.candidates[SENATOR][0] == expected_senator)
+# 	def testLoadCandidatesFromJSON(self):
+# 		election = Election()
+# 		expected_senator = Candidate(30, "Alton", SENATOR, "D")
+# 		election.loadCandidatesFromJSONFile("sample_candidates.json")
+# 		self.assertTrue(election.candidates[SENATOR][0] == expected_senator)
 
-		expected_president = Candidate(1, "Yun", PRESIDENT, "L")
-		self.assertTrue(election.candidates[PRESIDENT][0] == expected_president)
+# 		expected_president = Candidate(1, "Yun", PRESIDENT, "L")
+# 		self.assertTrue(election.candidates[PRESIDENT][0] == expected_president)
 
-		expected_evp = Candidate(16, "Amanda", EXTERNAL_VP, "L")
-		self.assertTrue(election.candidates[EXTERNAL_VP][1] == expected_evp)
+# 		expected_evp = Candidate(16, "Amanda", EXTERNAL_VP, "L")
+# 		self.assertTrue(election.candidates[EXTERNAL_VP][1] == expected_evp)
 
 	# def testAbsoluteTally(self):	
 	# 	election = Election()

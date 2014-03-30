@@ -24,12 +24,17 @@ class Candidate:
 
 class Election:
 
-	def __init__(self):
+	def __init__(self, frame):
 		# self.ballots is an array of Ballot objects
 		self.ballots = []
 
 		# self.candidates is a dictionary mapping positions to an array of Candidate objects
 		self.candidates = {}
+
+		# self.frame is the GUI frame that's displaying the election
+		self.frame = frame
+
+		self.race = None
 
 	def loadBallotsFromJSONFile(self, filepath):
 		self.ballots = []
@@ -81,15 +86,36 @@ class Election:
 				print(candidate)
 			print("")
 
+	def startRace(self, position):
+		candidates = self.candidates[position]
+		if not self.ballots: raise ElectionError("No ballots have been entered.")
+		self.race = Race(self, position, candidates, self.ballots)
+
+	def iterateRace(self):
+		if self.race:
+			return self.race.runStepExecutives()
+
+	def finishRace(self):
+		if self.race:
+			while self.race.runStepExecutives() != FINISHED:
+				pass
+		for cand in self.race.candidates:
+			print(cand)
+
+
 	def tally(self, position):
 		candidates = self.candidates[position]
 		if not self.ballots: raise ElectionError("No ballots have been entered.")
 
-		race = Race(position, candidates, self.ballots)
+		race = Race(self, position, candidates, self.ballots)
 		if position != SENATOR:
 			return race.applyBallotExecutives()
 		else:
-			return race.applyBallotSenator()
+			self.iterator = race.applyBallotSenator()
+
+	def step(self):
+		# print("stepped")
+		return self.iterator.next()
 
 	
 
