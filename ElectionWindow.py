@@ -57,7 +57,7 @@ class ElectionFrame(wx.Frame):
         self.election.loadCandidatesFromJSONFile("candidates2013.json")
 
 
-        self.candidatesPanel = CandidatesPanel(backgroundPanel, self.election.candidates[PRESIDENT], self)
+        self.candidatesPanel = CandidatesPanel(backgroundPanel, self.election.candidates[SENATOR], self)
         self.candidatesPanel.SetBackgroundColour((240,240,240))
         backgroundPanel.GetSizer().Add(self.candidatesPanel, 1, wx.EXPAND | wx.ALL, 3)
 
@@ -67,7 +67,7 @@ class ElectionFrame(wx.Frame):
 
         backgroundPanel.GetSizer().Add(infoPanel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 3)
 
-        self.election.startRace(PRESIDENT)
+        self.election.startRace(SENATOR)
 
     def OnQuit(self, e):
         self.next()
@@ -78,7 +78,7 @@ class ElectionFrame(wx.Frame):
             return
         else:
             print("Iterating")
-            time.sleep(.001)
+            time.sleep(.0001)
             thread.start_new_thread(self.candidatesPanel.refresh, ())
             # self.candidatesPanel.refresh
 
@@ -144,11 +144,14 @@ class CandidatesTable(wx.grid.PyGridTableBase):
         elif col == 2:
             return self.candidates[row].party
         elif col == 3:
-            return self.candidates[row].score
+            return self.round(self.candidates[row].score,4)
 
     def SetValue(self, row, col, value):
         """Set the value of a cell"""
         pass
+
+    def round(self, num, places):
+        return int(num * (10 ** places))/float(10 ** places)
 
 class InfoPanel(wx.Panel):
     def __init__(self, parent):

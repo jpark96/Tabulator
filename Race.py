@@ -19,8 +19,15 @@ class Race:
 		self.current_ballots = ballots
 		self.redistribute_ballots = []
 		self.numValidVotes = self.countValidVotes(ballots)
-		self.quota = round((self.numValidVotes + 1)/2.0)
+		if position != SENATOR:
+			self.quota = round((self.numValidVotes + 1)/2.0)
+		else:
+			self.quota = round(float(self.numValidVotes)/(NUM_SENATORS+1) + 1)
 		self.winner = []
+
+		# For senators
+		self.current_winners = []
+		self.current_runners = candidates[:]
 
 		# (HACK) Can't hash candidates, so temporarily use their candidate number as a key
 		self.numToCandidate = {candidate.number: candidate for candidate in candidates}
@@ -40,7 +47,7 @@ class Race:
 			return FINISHED
 		if self.current_ballots:
 			ballot = self.current_ballots.pop(0)
-			if ballot.candidate:
+			if ballot.candidate and ballot.candidate.state == LOSE:
 				ballot.candidate.score -= ballot.value
 			self.applyBallot(ballot)
 			return CONTINUE
@@ -63,6 +70,46 @@ class Race:
 				self.current_ballots += candidate.ballots
 				candidate.state = LOSE
 				return STOP
+
+	def runStepSenator(self):
+		if self.finished:
+			return FINISHED
+		if self.current_ballots:
+			ballot = self.current_ballots.pop(0)
+			if ballot.candidate and ballot.candidate.state == LOSE:
+				ballot.candidate.score -= ballot.value
+			self.applyBallot(ballot)
+			# ballot.candidate.score = self.round(ballot.candidate.score, 4)
+			return CONTINUE
+
+		if (len(self.current_winners) + len(self.current_runners)) <= NUM_SENATORS:
+			self.current_runners.sort(key=lambda x: -1 * x.score)
+			self.winner = self.current_winners + self.current_runners
+			self.finished = True
+			return FINISHED
+		if len(self.current_winners) == NUM_SENATORS:
+			self.winner = self.current_winners
+			self.finished = True
+			return FINISHED
+
+		self.current_runners.sort(key=lambda x: x.score)
+		top_candidate = self.current_runners[-1]
+
+		if top_candidate.score >= self.quota:
+			top_candidate.state = WIN
+			self.current_runners.pop()
+			self.current_winners.append(top_candidate)
+			for ballot in top_candidate.ballots:
+				ballot.value = ballot.value * float(top_candidate.score - self.quota)/top_candidate.score
+				self.current_ballots.append(ballot)
+			top_candidate.score = self.quota
+			return CONTINUE
+		else:
+			print("got here")
+			last_candidate = self.current_runners.pop(0)
+			self.current_ballots += last_candidate.ballots
+			last_candidate.state = LOSE
+			return STOP
 
 	def applyBallotSenator(self):
 		for ballot in self.ballots:

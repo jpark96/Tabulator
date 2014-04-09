@@ -63,7 +63,7 @@ class raceTest(unittest.TestCase):
 		election = Election(None)
 		election.loadBallotsFromJSONFile("ballots.json")
 		election.loadCandidatesFromJSONFile("candidates2013.json")
-		election.startRace(PRESIDENT)
+		election.startRace(SENATOR)
 		election.finishRace()
 
 class ballotTest(unittest.TestCase):

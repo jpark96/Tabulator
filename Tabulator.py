@@ -90,32 +90,42 @@ class Election:
 		candidates = self.candidates[position]
 		if not self.ballots: raise ElectionError("No ballots have been entered.")
 		self.race = Race(self, position, candidates, self.ballots)
+		if (position != SENATOR):
+			self.stepFunction = self.race.runStepExecutives
+		else:
+			self.stepFunction = self.race.runStepSenator
 
 	def iterateRace(self):
 		if self.race:
-			return self.race.runStepExecutives()
+			return self.stepFunction()
 
 	def finishRace(self):
 		if self.race:
-			while self.race.runStepExecutives() != FINISHED:
+			status = CONTINUE
+			while status != FINISHED:
+				status = self.stepFunction()
+				if status == STOP:
+					self.race.candidates.sort(key=lambda x: -1 * x.score)
+					for cand in self.race.candidates:
+						print(cand)
+					raw_input()
 				pass
-		for cand in self.race.candidates:
-			print(cand)
+		
 
 
-	def tally(self, position):
-		candidates = self.candidates[position]
-		if not self.ballots: raise ElectionError("No ballots have been entered.")
+	# def tally(self, position):
+	# 	candidates = self.candidates[position]
+	# 	if not self.ballots: raise ElectionError("No ballots have been entered.")
 
-		race = Race(self, position, candidates, self.ballots)
-		if position != SENATOR:
-			return race.applyBallotExecutives()
-		else:
-			self.iterator = race.applyBallotSenator()
+	# 	race = Race(self, position, candidates, self.ballots)
+	# 	if position != SENATOR:
+	# 		return race.applyBallotExecutives()
+	# 	else:
+	# 		self.iterator = race.applyBallotSenator()
 
-	def step(self):
-		# print("stepped")
-		return self.iterator.next()
+	# def step(self):
+	# 	# print("stepped")
+	# 	return self.iterator.next()
 
 	
 
