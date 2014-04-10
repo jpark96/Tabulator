@@ -32,8 +32,6 @@ class ElectionFrame(wx.Frame):
         loadb = filemenu.Append(wx.ID_ANY, "Load &Ballots", "Load ballots file")
         quit = filemenu.Append(wx.ID_ANY, "E&xit", "Terminate the program")
         
-        self.Bind(wx.EVT_MENU, self.OnQuit, quit)
-
         menubar.Append(filemenu, '&File')
 
         # Help Menu
@@ -61,27 +59,33 @@ class ElectionFrame(wx.Frame):
         self.candidatesPanel.SetBackgroundColour((240,240,240))
         backgroundPanel.GetSizer().Add(self.candidatesPanel, 1, wx.EXPAND | wx.ALL, 3)
 
-        # Load information panel
-        infoPanel = InfoPanel(backgroundPanel)
-        infoPanel.SetBackgroundColour((240,240,240))
-
-        backgroundPanel.GetSizer().Add(infoPanel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 3)
-
         quota = self.election.startRace(SENATOR)
+
+        # Load information panel
+        self.infoPanel = InfoPanel(backgroundPanel, quota)
+        self.infoPanel.frame = self
+        self.infoPanel.SetBackgroundColour((240,240,240))
+
+        backgroundPanel.GetSizer().Add(self.infoPanel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 3)
 
         self.candidatesPanel.datasource.update()
         self.candidatesPanel.datasource.quota = quota
 
-    def OnQuit(self, e):
-        self.next()
+    def redistribute(self):
+        thread.start_new_thread(self.next, ())
 
     def next(self):
         status = self.election.iterateRace() 
+        self.infoPanel.redistributeButton.Disable()
+
         while(status == CONTINUE):
-            time.sleep(.0001)
+            time.sleep(.001)
             self.candidatesPanel.refresh()
             status = self.election.iterateRace()
-            self.Update()
+            wx.Yield()
+            # self.Update()
+        self.infoPanel.redistributeButton.Enable()
+
 
 
 class CandidatesPanel(scrolled.ScrolledPanel):
@@ -106,18 +110,6 @@ class CandidatesPanel(scrolled.ScrolledPanel):
 
         self.SetAutoLayout(1)
         self.SetupScrolling()
-
-        self.grid.Bind(wx.grid.EVT_GRID_LABEL_RIGHT_CLICK, self.clicked)
-
-        # raw_input()
-        # datasource.candidates[0].name = "sup"
-
-        # Figure out why scrolling doesn't work with grid
-        # grid.EnableScrolling()
-
-    def clicked(self, evt):
-        print("clicked")
-        self.grid.ForceRefresh()
 
     def refresh(self):
         self.candidates.sort(key=lambda x: -1 * (x.score + x.quotaPlace))
@@ -155,6 +147,7 @@ class CandidatesTable(wx.grid.PyGridTableBase):
         self.grid = grid
         self.barRenderer = barRenderer
         self.quota = 1
+        self.lastScore = {}
         # Set a special renderer for displaying the bar 
 
         self.update()
@@ -176,23 +169,30 @@ class CandidatesTable(wx.grid.PyGridTableBase):
 
     def GetValue(self, row, col):
         """Return the value of a cell"""
-        if col == 0:
-            return self.candidates[row].number
-        elif col == 1:
-            return self.candidates[row].name
-        elif col == 2:
-            return self.candidates[row].party
-        elif col == 3:
-            return self.round(self.candidates[row].score,4)
-        elif col == 4:
-            return ""
+        try:
+            if col == 0:
+                return self.candidates[row].number
+            elif col == 1:
+                return self.candidates[row].name
+            elif col == 2:
+                return self.candidates[row].party
+            elif col == 3:
+                return self.round(self.candidates[row].score,4)
+            elif col == 4:
+                return ""
+        except:
+            pass
 
     def SetValue(self, row, col, value):
         """Set the value of a cell"""
         pass
 
     def getPercentage(self,row):
-        return self.candidates[row].score/self.quota
+        try:
+            self.lastScore[row] = self.candidates[row].score/self.quota
+            return self.lastScore[row]
+        except:
+            return self.lastScore[row]
 
     def round(self, num, places):
         return int(num * (10 ** places))/float(10 ** places)
@@ -206,10 +206,19 @@ class CandidatesTable(wx.grid.PyGridTableBase):
 
 
 class InfoPanel(wx.Panel):
-    def __init__(self, parent):
+    def __init__(self, parent, quota):
         wx.Panel.__init__(self, parent)
+        self.parent = parent
+        self.quota = quota
         self.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
 
-        quota = wx.StaticText(self, label='QUOTA')
+        quota = wx.StaticText(self, label='QUOTA: ' + str(self.quota))
         self.GetSizer().Add(quota, 1, wx.ALL, 5)
+
+        self.redistributeButton = wx.Button(self, wx.ID_ANY, label='redistribute')
+        self.GetSizer().Add(self.redistributeButton, 0, wx.ALL, 5)
+        self.Bind(wx.EVT_BUTTON, self.redistribute, self.redistributeButton)
+
+    def redistribute(self, evt):
+        self.frame.redistribute()
 

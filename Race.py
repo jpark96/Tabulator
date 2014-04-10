@@ -72,6 +72,8 @@ class Race:
 				return STOP
 
 	def runStepSenator(self):
+		self.candidates = sorted(self.candidates, key=lambda x: -1 * (x.score + x.quotaPlace))
+
 		if self.finished:
 			return FINISHED
 		if self.current_ballots:
