@@ -74,13 +74,18 @@ class ElectionFrame(wx.Frame):
 
     def next(self):
         status = self.election.iterateRace() 
-        if (status != CONTINUE):
-            return
-        else:
-            print("Iterating")
+        while(status == CONTINUE):
             time.sleep(.0001)
-            thread.start_new_thread(self.candidatesPanel.refresh, ())
-            # self.candidatesPanel.refresh
+            self.candidatesPanel.refresh()
+            status = self.election.iterateRace()
+            self.Update()
+        # if (status != CONTINUE):
+        #     return
+        # else:
+        #     print("Iterating")
+        #     time.sleep(.0001)
+        #     # thread.start_new_thread(self.candidatesPanel.refresh, ())
+        #     self.candidatesPanel.refresh()
 
 
 class CandidatesPanel(scrolled.ScrolledPanel):
@@ -98,6 +103,7 @@ class CandidatesPanel(scrolled.ScrolledPanel):
         self.grid.SetTable(datasource)
         self.grid.AutoSize()
         self.grid.SetColSize(0, 30)
+        self.grid.SetColSize(3, 100)
         self.GetSizer().Add(self.grid, 1, wx.EXPAND)
 
         self.SetAutoLayout(1)
@@ -110,9 +116,9 @@ class CandidatesPanel(scrolled.ScrolledPanel):
         # grid.EnableScrolling()
 
     def refresh(self):
-        self.candidates.sort(key=lambda x: -1 * x.score)
-        self.grid.ForceRefresh()
-        self.frame.next()
+        self.candidates.sort(key=lambda x: -1 * (x.score + x.quotaPlace))
+        self.grid.Refresh()
+        # self.frame.next()
 
 class CandidatesTable(wx.grid.PyGridTableBase):
     def __init__(self, candidates):

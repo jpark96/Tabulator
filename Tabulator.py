@@ -12,6 +12,7 @@ class Candidate:
 		self.score = 0
 		self.ballots = []
 		self.state = RUNNING
+		self.quotaPlace = 0 # Maintains the order of candidates to quota'd
 
 	def __eq__(self, other):
 		return (other.number == self.number) and (other.name == self.name) and (other.position == self.position) and (other.party == self.party)

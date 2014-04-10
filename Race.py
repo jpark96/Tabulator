@@ -95,6 +95,7 @@ class Race:
 		self.current_runners.sort(key=lambda x: x.score)
 		top_candidate = self.current_runners[-1]
 
+		# Someone Quota'd
 		if top_candidate.score >= self.quota:
 			top_candidate.state = WIN
 			self.current_runners.pop()
@@ -103,9 +104,9 @@ class Race:
 				ballot.value = ballot.value * float(top_candidate.score - self.quota)/top_candidate.score
 				self.current_ballots.append(ballot)
 			top_candidate.score = self.quota
+			top_candidate.quotaPlace = NUM_SENATORS - len(self.current_winners) + 1
 			return CONTINUE
 		else:
-			print("got here")
 			last_candidate = self.current_runners.pop(0)
 			self.current_ballots += last_candidate.ballots
 			last_candidate.state = LOSE
