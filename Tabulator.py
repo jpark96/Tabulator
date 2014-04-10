@@ -95,6 +95,7 @@ class Election:
 			self.stepFunction = self.race.runStepExecutives
 		else:
 			self.stepFunction = self.race.runStepSenator
+		return self.race.quota
 
 	def iterateRace(self):
 		if self.race:
@@ -111,22 +112,7 @@ class Election:
 						print(cand)
 					raw_input()
 				pass
-		
 
-
-	# def tally(self, position):
-	# 	candidates = self.candidates[position]
-	# 	if not self.ballots: raise ElectionError("No ballots have been entered.")
-
-	# 	race = Race(self, position, candidates, self.ballots)
-	# 	if position != SENATOR:
-	# 		return race.applyBallotExecutives()
-	# 	else:
-	# 		self.iterator = race.applyBallotSenator()
-
-	# def step(self):
-	# 	# print("stepped")
-	# 	return self.iterator.next()
 
 	
 

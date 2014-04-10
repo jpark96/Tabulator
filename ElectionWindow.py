@@ -67,7 +67,10 @@ class ElectionFrame(wx.Frame):
 
         backgroundPanel.GetSizer().Add(infoPanel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 3)
 
-        self.election.startRace(SENATOR)
+        quota = self.election.startRace(SENATOR)
+
+        self.candidatesPanel.datasource.update()
+        self.candidatesPanel.datasource.quota = quota
 
     def OnQuit(self, e):
         self.next()
@@ -79,13 +82,6 @@ class ElectionFrame(wx.Frame):
             self.candidatesPanel.refresh()
             status = self.election.iterateRace()
             self.Update()
-        # if (status != CONTINUE):
-        #     return
-        # else:
-        #     print("Iterating")
-        #     time.sleep(.0001)
-        #     # thread.start_new_thread(self.candidatesPanel.refresh, ())
-        #     self.candidatesPanel.refresh()
 
 
 class CandidatesPanel(scrolled.ScrolledPanel):
@@ -97,17 +93,21 @@ class CandidatesPanel(scrolled.ScrolledPanel):
         #     name = wx.StaticText(self, label=candidates[i])
         #     self.GetSizer().Add(name, 0, wx.ALL, 5)
         self.frame = frame
+        self.parent = parent
         self.candidates = candidates
         self.grid = gridlib.Grid(self)
-        datasource = CandidatesTable(candidates)
-        self.grid.SetTable(datasource)
+        self.datasource = CandidatesTable(self, candidates, self.grid, BarRenderer)
+        self.grid.SetTable(self.datasource)
         self.grid.AutoSize()
         self.grid.SetColSize(0, 30)
         self.grid.SetColSize(3, 100)
+        self.grid.SetColSize(4, 200)
         self.GetSizer().Add(self.grid, 1, wx.EXPAND)
 
         self.SetAutoLayout(1)
         self.SetupScrolling()
+
+        self.grid.Bind(wx.grid.EVT_GRID_LABEL_RIGHT_CLICK, self.clicked)
 
         # raw_input()
         # datasource.candidates[0].name = "sup"
@@ -115,23 +115,56 @@ class CandidatesPanel(scrolled.ScrolledPanel):
         # Figure out why scrolling doesn't work with grid
         # grid.EnableScrolling()
 
+    def clicked(self, evt):
+        print("clicked")
+        self.grid.ForceRefresh()
+
     def refresh(self):
         self.candidates.sort(key=lambda x: -1 * (x.score + x.quotaPlace))
         self.grid.Refresh()
-        # self.frame.next()
+
+class BarRenderer(wx.grid.PyGridCellRenderer):
+    def __init__(self, table, color):
+        wx.grid.PyGridCellRenderer.__init__(self)
+        self.table = table
+        self.color = color
+        self.rowSize = 50
+
+    def Draw(self, grid, attr, dc, rect, row, col, isSelected):
+        self.dc = dc
+        self.dc.BeginDrawing()
+        self.dc.SetPen(wx.Pen("grey",style=wx.TRANSPARENT))
+        self.dc.SetBrush(wx.Brush("blue", wx.SOLID))
+        # set x, y, w, h for rectangle
+        self.length = grid.GetColSize(col)
+        self.height = grid.GetRowSize(row)
+        self.percentage = self.table.getPercentage(row)
+        self.dc.DrawRectangle(rect.x,rect.y,self.length*self.percentage,self.height)
+        self.dc.EndDrawing()
+        self.dc.BeginDrawing()
+        self.dc.SetPen(wx.Pen("grey",style=wx.TRANSPARENT))
+        self.dc.SetBrush(wx.Brush("white", wx.SOLID))
+        self.dc.DrawRectangle(rect.x+self.length*self.percentage,rect.y,self.length*(1-self.percentage),self.height)
+        self.dc.EndDrawing()
 
 class CandidatesTable(wx.grid.PyGridTableBase):
-    def __init__(self, candidates):
+    def __init__(self, parent, candidates, grid, barRenderer):
         wx.grid.PyGridTableBase.__init__(self)
         self.candidates = candidates
+        self.parent = parent
+        self.grid = grid
+        self.barRenderer = barRenderer
+        self.quota = 1
+        # Set a special renderer for displaying the bar 
 
+        self.update()
     def GetNumberRows(self):
         """Return the number of rows in the grid"""
         return len(self.candidates)
 
     def GetNumberCols(self):
         """Return the number of columns in the grid"""
-        return 4
+        return 5
 
     def IsEmptyCell(self, row, col):
         """Return True if the cell is empty"""
@@ -151,13 +184,26 @@ class CandidatesTable(wx.grid.PyGridTableBase):
             return self.candidates[row].party
         elif col == 3:
             return self.round(self.candidates[row].score,4)
+        elif col == 4:
+            return ""
 
     def SetValue(self, row, col, value):
         """Set the value of a cell"""
         pass
 
+    def getPercentage(self,row):
+        return self.candidates[row].score/self.quota
+
     def round(self, num, places):
         return int(num * (10 ** places))/float(10 ** places)
+
+    def update(self):
+        attr = wx.grid.GridCellAttr()
+        renderer = self.barRenderer(self, "blue")
+        attr.SetReadOnly(True)
+        attr.SetRenderer(renderer)
+        self.grid.SetColAttr(4, attr)
+
 
 class InfoPanel(wx.Panel):
     def __init__(self, parent):
