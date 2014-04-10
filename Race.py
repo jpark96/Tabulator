@@ -112,57 +112,6 @@ class Race:
 			last_candidate.state = LOSE
 			return STOP
 
-	def applyBallotSenator(self):
-		for ballot in self.ballots:
-			self.initializeFirstVotes(ballot)
-		self.spentBallots = 0
-
-		quota = round(float(self.validVotes)/(NUM_SENATORS+1) + 1)
-		print(quota)
-		current_winners = []
-		current_runners = self.candidates[:]
-		current_ballots = []
-
-
-		while True:
-			if (len(current_winners) + len(current_runners)) <= NUM_SENATORS:
-				# print("Spent ballots: " + str(self.spentBallots))
-				current_runners.sort(key=lambda x: -1 * x.score)
-				current_winners += current_runners
-				yield current_winners
-
-			current_runners.sort(key=lambda x: x.score)
-			top_candidate = current_runners[-1]
-
-			if top_candidate.score >= quota:
-
-				top_candidate.state = WIN
-				current_runners.pop()
-				current_winners.append(top_candidate)
-				for ballot in top_candidate.ballots:
-					ballot.value = ballot.value * float(top_candidate.score - quota)/top_candidate.score
-					current_ballots.append(ballot)
-				top_candidate.score = quota
-
-			elif current_ballots:
-				while(current_ballots):
-					self.applyBallot(current_ballots.pop(0))
-					yield True
-			else:
-				print("Killing a candidate")
-				yield False
-				last_candidate = current_runners.pop(0)
-				for ballot in last_candidate.ballots:
-					self.applyBallot(ballot)
-					yield True
-				last_candidate.state = LOSE
-				last_candidate.score = 0
-				
-			if len(current_winners) == NUM_SENATORS:
-				print("Spent ballots: " + str(self.spentBallots))
-				yield current_winners
-
-
 
 	def applyBallot(self, ballot):
 		"""Increment a candidates score, and pop his number off the vote"""
@@ -199,69 +148,6 @@ class Race:
 		if self.applyBallot(ballot):
 			self.validVotes += 1
 
-
-
-	def applyBallots(self):
-		# First pass
-		for ballot in self.ballots:
-			self.initializeFirstVotes(ballot)
-		
-		if self.position == SENATOR:
-			while(self.winners <= 20):
-				self.checkQuota()
-				self.redistribute()
-		else:
-		# See if any executive won through quota'ing
-			for candidate in self.candidates:
-				if candidate.state == WIN:
-					return
-
-	def redistribute(self):
-		"""Redistribute the votes of the candidate who is still running and has the least votes."""
-		self.candidates.sort(key=lambda x: x.score)
-		for candidate in self.candidates:
-			if candidate.state == RUNNING:
-				for ballot in candidate.ballots:
-					self.applyBallot(ballot)
-				candidate.state = LOSE
-				break
-
-	def checkQuota(self):
-		"""Check if any candidates have quota'd and update their status."""
-		if self.position != SENATOR:
-			quota = self.validVotes/(NUM_SENATORS+1) + 1
-		else:
-			quota = (self.validVotes + 1)/2.0
-		for candidate in self.candidates:
-			if candidate.score >= quota:
-				candidate.state = WIN
-				self.winners += 1
-
-
-	def results(self):
-		# Sorts the candidates based on their votes
-		number_and_votes = [(number, votes) for number, votes in self.candidateVotes.items()]
-		number_and_votes.sort(key=lambda x: -1*x[1])
-		
-		candidates_list = []
-		score_list = []
-		for number, votes in number_and_votes:
-			candidates_list.append(self.candidateNumberToCandidate[number])
-			score_list.append(votes)
-
-		return candidates_list, score_list
-
-	def displayResults(self):
-		for candidate in self.candidates:
-			print(str(candidate.number) + ". " + candidate.name + " " + str(self.candidateVotes[candidate.number]))
-
-	def absolute_value(self,rank):
-		# The first vote in an array gets a value of 1
-		return 1
-
-	def inverse_value(self, rank):
-		# Value of vote is inverse to its rank
-		return 1/(1+rank)
 
 class ElectionError(Exception):
 
