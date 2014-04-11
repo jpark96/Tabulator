@@ -1,6 +1,8 @@
 from constants import *
+from random import shuffle
 import math
 import time
+import sys
 
 class Race:
 # A race refers to an election for one particular position
@@ -55,21 +57,25 @@ class Race:
 			for candidate in self.candidates:
 				if candidate.state == RUNNING:
 					candidate.state = WIN
+					candidate.score = self.quota
 					self.finished = True
 					self.winner.append(candidate)
 					return FINISHED
 		for candidate in self.candidates:
 			if candidate.score >= self.quota:
 				candidate.state = WIN
+				candidate.score = self.quota
 				self.finished = True
 				self.winner.append(candidate)
 				return FINISHED
 		self.candidates.sort(key=lambda x: -1 * x.score)
+		worst_score = sys.maxint
 		for candidate in reversed(self.candidates):
-			if candidate.state == RUNNING:
+			if candidate.state == RUNNING and candidate.score <= worst_score:
 				self.current_ballots += candidate.ballots
 				candidate.state = LOSE
-				return STOP
+				worst_score = candidate.score
+		return STOP
 
 	def runStepSenator(self):
 		self.candidates = sorted(self.candidates, key=lambda x: -1 * (x.score + x.quotaPlace))
@@ -112,6 +118,15 @@ class Race:
 			last_candidate = self.current_runners.pop(0)
 			self.current_ballots += last_candidate.ballots
 			last_candidate.state = LOSE
+			# Take out all tied candidates
+			while True:
+				if self.current_runners[0].score == last_candidate.score:
+					curr_candidate = self.current_runners.pop(0)
+					self.current_ballots += curr_candidate.ballots
+					curr_candidate.state = LOSE
+				else:
+					break
+			shuffle(self.current_ballots)
 			return STOP
 
 

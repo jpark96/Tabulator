@@ -1,4 +1,5 @@
 import json
+import copy
 from pprint import pprint
 from Race import *
 
@@ -90,7 +91,8 @@ class Election:
 	def startRace(self, position):
 		candidates = self.candidates[position]
 		if not self.ballots: raise ElectionError("No ballots have been entered.")
-		self.race = Race(self, position, candidates, self.ballots)
+		ballot_copy = copy.deepcopy(self.ballots)
+		self.race = Race(self, position, candidates, ballot_copy)
 		if (position != SENATOR):
 			self.stepFunction = self.race.runStepExecutives
 		else:
@@ -100,6 +102,15 @@ class Election:
 	def iterateRace(self):
 		if self.race:
 			return self.stepFunction()
+
+	def resetRace(self):
+		if self.race:
+			for candidate in self.race.candidates:
+				candidate.score = 0
+				candidate.ballots = []
+				candidate.state = RUNNING
+				candidate.quotaPlace = 0
+		self.race = None
 
 	def finishRace(self):
 		if self.race:
