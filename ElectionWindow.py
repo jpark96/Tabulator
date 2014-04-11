@@ -52,7 +52,7 @@ class ElectionFrame(wx.Frame):
         self.position = PRESIDENT       # Position of current race
         self.quota = 0                  # Quota of current race
         self.status = CONTINUE          # Status of current race
-        self.condition = threading.Condition()
+        self.toCompletion = False
 
         # Outside Panel
         self.backgroundPanel = wx.Panel(self)
@@ -147,7 +147,6 @@ class ElectionFrame(wx.Frame):
             wx.Yield()
         
         self.status = status
-        self.condition.notify()
 
         # Enable changing positions and redistributing again
         self.infoPanel.redistributeButton.Enable()
@@ -155,11 +154,15 @@ class ElectionFrame(wx.Frame):
 
         if status == FINISHED:
             self.electionsCompleted()
+            self.toCompletion = False
+            # self.infoPanel.completeButton.Enable()
+        elif (self.toCompletion):
+            self.redistribute()
 
     def complete(self):
-        while self.status != FINISHED:
-            self.redistribute()
-            self.condition.wait()
+        self.toCompletion = True
+        self.redistribute()
+        # self.infoPanel.completeButton.Disable()
 
     def electionsCompleted(self):
         finished = wx.MessageDialog(None, 'Elections Completed!', '', wx.OK | wx.ICON_EXCLAMATION)
