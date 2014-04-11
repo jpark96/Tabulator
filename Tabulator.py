@@ -1,3 +1,9 @@
+#############################################################
+#					    Tabulator.py						#
+#			  Created by: Alton Zheng & Yun Park			#
+#			   Copyright Elections Council 2014				#
+#############################################################
+
 import json
 import copy
 from pprint import pprint
@@ -79,6 +85,7 @@ class Election:
 	def __addJSONCandidate__(self, candidate, position):
 		self.candidates[position].append(Candidate(int(candidate["number"]), candidate["name"], position, candidate["party"]))
 
+	# Used for debugging
 	def displayCandidates(self):
 		for position in self.candidates:
 			print(position)
@@ -88,16 +95,18 @@ class Election:
 				print(candidate)
 			print("")
 
-	def startRace(self, position):
-		candidates = self.candidates[position]
-		if not self.ballots: raise ElectionError("No ballots have been entered.")
-		ballot_copy = copy.deepcopy(self.ballots)
-		self.race = Race(self, position, candidates, ballot_copy)
-		if (position != SENATOR):
-			self.stepFunction = self.race.runStepExecutives
-		else:
-			self.stepFunction = self.race.runStepSenator
-		return self.race.quota
+	# Used for debugging
+	def finishRace(self):
+		if self.race:
+			status = CONTINUE
+			while status != FINISHED:
+				status = self.stepFunction()
+				if status == STOP:
+					self.race.candidates.sort(key=lambda x: -1 * x.score)
+					for cand in self.race.candidates:
+						print(cand)
+					raw_input()
+				pass
 
 	def iterateRace(self):
 		if self.race:
@@ -112,25 +121,13 @@ class Election:
 				candidate.quotaPlace = 0
 		self.race = None
 
-	def finishRace(self):
-		if self.race:
-			status = CONTINUE
-			while status != FINISHED:
-				status = self.stepFunction()
-				if status == STOP:
-					self.race.candidates.sort(key=lambda x: -1 * x.score)
-					for cand in self.race.candidates:
-						print(cand)
-					raw_input()
-				pass
-
-
-	
-
-
-
-
-
-
-
-
+	def startRace(self, position):
+		candidates = self.candidates[position]
+		if not self.ballots: raise ElectionError("No ballots have been entered.")
+		ballot_copy = copy.deepcopy(self.ballots)
+		self.race = Race(self, position, candidates, ballot_copy)
+		if (position != SENATOR):
+			self.stepFunction = self.race.runStepExecutives
+		else:
+			self.stepFunction = self.race.runStepSenator
+		return self.race.quota

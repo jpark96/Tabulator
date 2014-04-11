@@ -1,3 +1,8 @@
+#############################################################
+#						constants.py						#
+#			  Created by: Alton Zheng & Yun Park			#
+#			   Copyright Elections Council 2013				#
+#############################################################
 
 SENATOR, ACADEMIC_VP, EXTERNAL_VP, EXECUTIVE_VP, STUDENT_ADVOCATE, PRESIDENT = range(1, 7)
 

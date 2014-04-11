@@ -1,3 +1,9 @@
+#############################################################
+#							Race.py 						#
+#			  Created by: Alton Zheng & Yun Park			#
+#			   Copyright Elections Council 2013				#
+#############################################################
+
 from constants import *
 from random import shuffle
 import math
@@ -34,6 +40,29 @@ class Race:
 		# (HACK) Can't hash candidates, so temporarily use their candidate number as a key
 		self.numToCandidate = {candidate.number: candidate for candidate in candidates}
 
+
+	def applyBallot(self, ballot):
+		"""Increment a candidates score, and pop his number off the vote"""
+		if self.position not in ballot.votes.keys():
+			raise ElectionError("Position not found in ballot!")
+		vote = ballot.votes[self.position]
+
+		while True:
+			if not vote:
+				self.spentBallots += ballot.value
+				return False
+			candidate_num = int(vote.pop(0))
+			if candidate_num not in self.numToCandidate.keys():
+				raise ElectionError("Candidate " + str(candidate_num) + " not found!")
+			if self.numToCandidate[candidate_num].state == RUNNING:
+				break
+
+		candidate = self.numToCandidate[candidate_num]
+		candidate.score += ballot.value
+		candidate.ballots.append(ballot)
+		ballot.candidate = candidate
+		return True
+
 	def countValidVotes(self, ballots):
 		count = 0
 		for ballot in ballots:
@@ -41,6 +70,18 @@ class Race:
 				raise ElectionError("Position not found in ballot!")
 			vote = ballot.votes[self.position]
 			if vote:
+				count += 1
+		return count
+
+	def initializeFirstVotes(self, ballot):
+		if self.applyBallot(ballot):
+			self.validVotes += 1
+
+	def numOfRunners(self):
+		"""Return the number of candidates still running"""
+		count = 0
+		for candidate in self.candidates:
+			if candidate.state == RUNNING:
 				count += 1
 		return count
 
@@ -128,42 +169,6 @@ class Race:
 					break
 			shuffle(self.current_ballots)
 			return STOP
-
-
-	def applyBallot(self, ballot):
-		"""Increment a candidates score, and pop his number off the vote"""
-		if self.position not in ballot.votes.keys():
-			raise ElectionError("Position not found in ballot!")
-		vote = ballot.votes[self.position]
-
-		while True:
-			if not vote:
-				self.spentBallots += ballot.value
-				return False
-			candidate_num = int(vote.pop(0))
-			if candidate_num not in self.numToCandidate.keys():
-				raise ElectionError("Candidate " + str(candidate_num) + " not found!")
-			if self.numToCandidate[candidate_num].state == RUNNING:
-				break
-
-		candidate = self.numToCandidate[candidate_num]
-		candidate.score += ballot.value
-		candidate.ballots.append(ballot)
-		ballot.candidate = candidate
-		return True
-
-
-	def numOfRunners(self):
-		"""Return the number of candidates still running"""
-		count = 0
-		for candidate in self.candidates:
-			if candidate.state == RUNNING:
-				count += 1
-		return count
-
-	def initializeFirstVotes(self, ballot):
-		if self.applyBallot(ballot):
-			self.validVotes += 1
 
 
 class ElectionError(Exception):

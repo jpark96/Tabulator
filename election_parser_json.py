@@ -1,5 +1,5 @@
 #############################################################
-#					eiection_parser.py						#
+#					election_parser.py						#
 #			  Created by: Alton Zheng & Yun Park			#
 #			   Copyright Elections Council 2013				#
 #############################################################

@@ -1,3 +1,9 @@
+#############################################################
+#                     ElectionWindow.py                     #
+#             Created by: Alton Zheng & Yun Park            #
+#              Copyright Elections Council 2014             #
+#############################################################
+
 import wx
 import wx.lib.scrolledpanel as scrolled
 import wx.grid as gridlib
@@ -40,6 +46,7 @@ class ElectionFrame(wx.Frame):
         # Help Menu
         helpmenu = wx.Menu()
         about = helpmenu.Append(wx.ID_ANY, "&About", "Information about the program")
+        self.Bind(wx.EVT_MENU, self.About, about)
         menubar.Append(helpmenu, '&Help')
 
         # Set Menu Bar
@@ -125,10 +132,22 @@ class ElectionFrame(wx.Frame):
         loaded.ShowModal()
         self.ballotsLoaded = True
 
-
     def OnQuit(self, evt):
         # Close the tabulator
         self.Close()
+
+    def About(self, evt):
+        # About Dialog
+        self.about = wx.MessageDialog(None,
+            'This was writting for exclusive use by the Associated Students of the University of California by \
+            Yun Park and Alton Zheng-Xie. (ASUC Technical Coordinators 2011-2014) This software is provided \
+            \'as is\', and users must recognize that they operate this software at their own risk. In no event \
+            shall the producers of this software be liable for any consequential, incidental, or special damage \
+            whatsoever arising out of the use of or inability to use this software. Although this program has been \
+            thoroughly tested, there is always the change of unresolved issues.',
+            'ASUC Elections Tabulator v4.0',
+            wx.OK)
+        self.about.ShowModal()
 
     def redistribute(self):
         thread.start_new_thread(self.next, ())
@@ -155,14 +174,14 @@ class ElectionFrame(wx.Frame):
         if status == FINISHED:
             self.electionsCompleted()
             self.toCompletion = False
-            # self.infoPanel.completeButton.Enable()
+            self.infoPanel.completeButton.Enable()
         elif (self.toCompletion):
             self.redistribute()
 
     def complete(self):
         self.toCompletion = True
         self.redistribute()
-        # self.infoPanel.completeButton.Disable()
+        self.infoPanel.completeButton.Disable()
 
     def electionsCompleted(self):
         finished = wx.MessageDialog(None, 'Elections Completed!', '', wx.OK | wx.ICON_EXCLAMATION)
@@ -299,7 +318,6 @@ class CandidatesTable(wx.grid.PyGridTableBase):
         attr.SetReadOnly(True)
         attr.SetRenderer(renderer)
         self.grid.SetColAttr(4, attr)
-
 
 class InfoPanel(wx.Panel):
     def __init__(self, parent, quota):

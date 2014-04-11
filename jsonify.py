@@ -17,6 +17,3 @@ with open(str(sys.argv[1]), 'rU') as f:
 		
 		candidates[position].append(candidate)
 print(json.dumps(candidates, sort_keys=True, indent=4, separators=(',', ': ')))
-
-
-
