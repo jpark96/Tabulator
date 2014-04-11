@@ -7,7 +7,7 @@ from constants import *
 from Race import *
 
 import time
-import thread
+import thread, threading
 
 class ElectionFrame(wx.Frame):
   
@@ -28,90 +28,138 @@ class ElectionFrame(wx.Frame):
         # File Menu
         filemenu = wx.Menu()
 
-        loadc = filemenu.Append(wx.ID_ANY, "Load &Candidates", "Load candidates file")
         loadb = filemenu.Append(wx.ID_ANY, "Load &Ballots", "Load ballots file")
+        self.Bind(wx.EVT_MENU, self.LoadBallots, loadb)
+        loadc = filemenu.Append(wx.ID_ANY, "Load &Candidates", "Load candidates file")
+        self.Bind(wx.EVT_MENU, self.LoadCandidates, loadc)
         quit = filemenu.Append(wx.ID_ANY, "E&xit", "Terminate the program")
+        self.Bind(wx.EVT_MENU, self.OnQuit, quit)
         
         menubar.Append(filemenu, '&File')
 
         # Help Menu
         helpmenu = wx.Menu()
-
         about = helpmenu.Append(wx.ID_ANY, "&About", "Information about the program")
-
         menubar.Append(helpmenu, '&Help')
 
         # Set Menu Bar
         self.SetMenuBar(menubar)
+
+        # Variables
+        self.ballotsLoaded = False      # Make sure ballots are loaded first before candidates
+        self.candidatesLoaded = False   # Make sure candidates are loaded
+        self.speed = 0.0005             # Speed of tallying votes (seconds per tally)
+        self.position = PRESIDENT       # Position of current race
+        self.quota = 0                  # Quota of current race
+        self.status = CONTINUE          # Status of current race
+        self.condition = threading.Condition()
 
         # Outside Panel
         self.backgroundPanel = wx.Panel(self)
         self.backgroundPanel.SetSizer(wx.BoxSizer(wx.VERTICAL))
         self.backgroundPanel.SetBackgroundColour((200,200,200))
 
-        self.speed = 0.0005
-
-        # Load the candidates panel
+        # Start an Election
         self.election = Election(self)
-        self.election.loadBallotsFromJSONFile("ballots.json")
-        self.election.loadCandidatesFromJSONFile("candidates2013.json")
 
-        # Current Race
-        self.position = PRESIDENT
-        self.quota = 0
-
-        self.candidatesPanel = CandidatesPanel(self.backgroundPanel, self.election.candidates[self.position], self)
-        self.candidatesPanel.SetBackgroundColour((240,240,240))
-        self.backgroundPanel.GetSizer().Add(self.candidatesPanel, 1, wx.EXPAND | wx.ALL, 3)
-
-        self.quota = self.election.startRace(self.position)
-
-        self.candidatesPanel.datasource.update()
-        self.candidatesPanel.datasource.quota = self.quota
+        # Initialize Candidates Panel (with no candidates since no file has been loaded)
+        self.candidatesPanel = wx.Panel(self.backgroundPanel)
+        self.candidatesPanel.SetBackgroundColour((220,220,220))
+        self.backgroundPanel.GetSizer().Add(self.candidatesPanel, 1, wx.EXPAND | wx.ALL, 5)
 
         # Load information panel
         self.infoPanel = InfoPanel(self.backgroundPanel, self.quota)
         self.infoPanel.frame = self
-        self.infoPanel.SetBackgroundColour((240,240,240))
-        self.backgroundPanel.GetSizer().Add(self.infoPanel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 3)
+        self.infoPanel.SetBackgroundColour((210,210,210))
+        self.backgroundPanel.GetSizer().Add(self.infoPanel, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 5)
 
     def replaceRace(self):
+        # Replace candidates panel with new
         self.candidatesPanel.Destroy()
         self.candidatesPanel = CandidatesPanel(self.backgroundPanel, self.election.candidates[self.position], self)
-        self.candidatesPanel.SetBackgroundColour((240,240,240))
+        self.candidatesPanel.SetBackgroundColour((220,220,220))
         self.backgroundPanel.GetSizer().Insert(0,self.candidatesPanel, 1, wx.EXPAND | wx.ALL, 3)
         self.backgroundPanel.Layout()
 
+        # Reset the scores and ballots of candidates, start race, and update datasource
         self.election.resetRace()
-
         self.quota = self.election.startRace(self.position)
-
         self.candidatesPanel.datasource.update()
         self.candidatesPanel.datasource.quota = self.quota
 
+        # Update the quota in info panel
         self.infoPanel.quota = self.quota
         self.infoPanel.resetQuotaLabel()
         self.infoPanel.Layout()
+
+    def LoadCandidates(self, evt):
+        # Make sure ballots are loaded before candidates
+        if not self.ballotsLoaded:
+            error = wx.MessageDialog(None, 'Please Load Ballots First!', '', wx.OK | wx.ICON_EXCLAMATION)
+            error.ShowModal()
+            return
+        candFile = wx.FileDialog(self, "", "", "", "", wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+
+        # If file was not selected
+        if candFile.ShowModal() == wx.ID_CANCEL:
+            return
+        candFilePath = candFile.GetPath()
+        self.election.loadCandidatesFromJSONFile(candFilePath)
+        self.candidatesLoaded = True
+        self.replaceRace()
+            
+    def LoadBallots(self, evt):
+        ballotFile = wx.FileDialog(self, "", "", "", "", wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
+
+        # If file was not selected
+        if ballotFile.ShowModal() == wx.ID_CANCEL:
+            return
+        ballotFilePath = ballotFile.GetPath()
+        try: 
+            self.election.loadBallotsFromJSONFile(ballotFilePath)
+        except:
+            error = wx.MessageDialog(None, 'Incorrectly Formatted Ballots File!', '', wx.OK | wx.ICON_EXCLAMATION)
+            error.ShowModal()
+            return
+        loaded = wx.MessageDialog(None, 'Ballots Successfully Loaded!', '', wx.OK | wx.ICON_EXCLAMATION)
+        loaded.ShowModal()
+        self.ballotsLoaded = True
+
+
+    def OnQuit(self, evt):
+        # Close the tabulator
+        self.Close()
 
     def redistribute(self):
         thread.start_new_thread(self.next, ())
 
     def next(self):
-        status = self.election.iterateRace() 
+        status = self.election.iterateRace()
+
+        # Disable changing positions and redistributing again
         self.infoPanel.redistributeButton.Disable()
         self.infoPanel.positionComboBox.Disable()
 
-        while(status == CONTINUE):
+        while status == CONTINUE:
             time.sleep(self.speed)
             self.candidatesPanel.refresh()
             status = self.election.iterateRace()
             wx.Yield()
-            # self.Update()
+        
+        self.status = status
+        self.condition.notify()
+
+        # Enable changing positions and redistributing again
         self.infoPanel.redistributeButton.Enable()
         self.infoPanel.positionComboBox.Enable()
 
         if status == FINISHED:
             self.electionsCompleted()
+
+    def complete(self):
+        while self.status != FINISHED:
+            self.redistribute()
+            self.condition.wait()
 
     def electionsCompleted(self):
         finished = wx.MessageDialog(None, 'Elections Completed!', '', wx.OK | wx.ICON_EXCLAMATION)
@@ -120,25 +168,25 @@ class ElectionFrame(wx.Frame):
 class CandidatesPanel(scrolled.ScrolledPanel):
     def __init__(self, parent, candidates, frame):
         scrolled.ScrolledPanel.__init__(self, parent)
-        self.SetSizer(wx.BoxSizer(wx.VERTICAL))
-
-        # for i in range(len(candidates)):
-        #     name = wx.StaticText(self, label=candidates[i])
-        #     self.GetSizer().Add(name, 0, wx.ALL, 5)
-        self.frame = frame
         self.parent = parent
         self.candidates = candidates
+        self.frame = frame
+        
+        self.SetSizer(wx.BoxSizer(wx.VERTICAL))
+        self.initializeGrid()
+        self.GetSizer().Add(self.grid, 1, wx.EXPAND)
+
+        self.SetAutoLayout(1)
+        self.SetupScrolling()
+
+    def initializeGrid(self):
         self.grid = gridlib.Grid(self)
-        self.datasource = CandidatesTable(self, candidates, self.grid, BarRenderer)
+        self.datasource = CandidatesTable(self, self.candidates, self.grid, BarRenderer)
         self.grid.SetTable(self.datasource)
         self.grid.AutoSize()
         self.grid.SetColSize(0, 35)
         self.grid.SetColSize(3, 100)
         self.grid.SetColSize(4, 250)
-        self.GetSizer().Add(self.grid, 1, wx.EXPAND)
-
-        self.SetAutoLayout(1)
-        self.SetupScrolling()
 
     def refresh(self):
         self.candidates.sort(key=lambda x: -1 * (x.score + x.quotaPlace))
@@ -160,7 +208,6 @@ class BarRenderer(wx.grid.PyGridCellRenderer):
             self.dc.SetBrush(wx.Brush("yellow", wx.SOLID))
         else:
             self.dc.SetBrush(wx.Brush("blue", wx.SOLID))
-        # set x, y, w, h for rectangle
         self.length = grid.GetColSize(col)
         self.height = grid.GetRowSize(row)
         self.dc.DrawRectangle(rect.x,rect.y,self.length*self.percentage,self.height)
@@ -174,15 +221,16 @@ class BarRenderer(wx.grid.PyGridCellRenderer):
 class CandidatesTable(wx.grid.PyGridTableBase):
     def __init__(self, parent, candidates, grid, barRenderer):
         wx.grid.PyGridTableBase.__init__(self)
-        self.candidates = candidates
         self.parent = parent
+        self.candidates = candidates
         self.grid = grid
         self.barRenderer = barRenderer
+
         self.quota = 1
         self.lastScore = {}
-        # Set a special renderer for displaying the bar 
 
         self.update()
+
     def GetNumberRows(self):
         """Return the number of rows in the grid"""
         return len(self.candidates)
@@ -273,12 +321,16 @@ class InfoPanel(wx.Panel):
         self.GetSizer().Add(self.positionComboBox, 0, wx.TOP | wx.LEFT, 15)
         self.Bind(wx.EVT_COMBOBOX, self.changeRace)
 
-        self.redistributeButton = wx.Button(self, wx.ID_ANY, label='redistribute', size=(150,25))
+        self.redistributeButton = wx.Button(self, wx.ID_ANY, label='Redistribute', size=(125,25))
         self.GetSizer().Add(self.redistributeButton, 0, wx.TOP | wx.LEFT, 15)
         self.Bind(wx.EVT_BUTTON, self.redistribute, self.redistributeButton)
 
+        self.completeButton = wx.Button(self, wx.ID_ANY, label='Complete', size=(125,25))
+        self.GetSizer().Add(self.completeButton, 0, wx.TOP | wx.LEFT, 15)
+        self.Bind(wx.EVT_BUTTON, self.complete, self.completeButton)
+
     def changeSpeed(self, evt):
-        self.frame.speed = evt.GetEventObject().GetValue() * 0.00001
+        self.frame.speed = evt.GetEventObject().GetValue() * 0.0001
 
     def changeRace(self, evt):
         position = evt.GetString()
@@ -294,10 +346,15 @@ class InfoPanel(wx.Panel):
             self.frame.position = STUDENT_ADVOCATE
         elif position == 'Senator':
             self.frame.position = SENATOR
-        self.frame.replaceRace()
+        if self.frame.candidatesLoaded:
+            self.frame.replaceRace()
 
     def redistribute(self, evt):
         self.frame.redistribute()
+
+    def complete(self, evt):
+        self.frame.complete()
+        pass
 
     def resetQuotaLabel(self):
         self.quotaText.SetLabel('QUOTA (Score to WIN): ' + str(self.quota))
