@@ -5,6 +5,7 @@
 #############################################################
 
 import csv, sys, json
+from random import shuffle
 
 count = 0
 voter_id = '0'
@@ -65,5 +66,7 @@ with open(str(sys.argv[1]), 'rU') as f:
 			voter_data['sa'][rank] = candidate_number
 		elif position == '6':
 			voter_data['senator'][rank] = candidate_number
+
+# shuffle(output["ballots"])
 
 json.dump(output, new_file)

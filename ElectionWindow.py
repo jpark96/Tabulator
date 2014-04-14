@@ -193,6 +193,7 @@ class CandidatesPanel(scrolled.ScrolledPanel):
         self.parent = parent
         self.candidates = candidates
         self.frame = frame
+        self.quota = self.frame.quota
         
         self.SetSizer(wx.BoxSizer(wx.VERTICAL))
         self.initializeGrid()
@@ -211,7 +212,7 @@ class CandidatesPanel(scrolled.ScrolledPanel):
         self.grid.SetColSize(4, 250)
 
     def refresh(self):
-        self.candidates.sort(key=lambda x: -1 * (x.score + x.quotaPlace))
+        self.candidates.sort(key=lambda x: -1 * (x.score + x.quotaPlace * self.quota))
         self.grid.Refresh()
 
 class BarRenderer(wx.grid.PyGridCellRenderer):
@@ -226,7 +227,7 @@ class BarRenderer(wx.grid.PyGridCellRenderer):
         self.dc = dc
         self.dc.BeginDrawing()
         self.dc.SetPen(wx.Pen("grey",style=wx.TRANSPARENT))
-        if self.percentage == 1:
+        if self.percentage >= 1:
             self.dc.SetBrush(wx.Brush("yellow", wx.SOLID))
         else:
             self.dc.SetBrush(wx.Brush("blue", wx.SOLID))
@@ -245,6 +246,7 @@ class CandidatesTable(wx.grid.PyGridTableBase):
         wx.grid.PyGridTableBase.__init__(self)
         self.parent = parent
         self.candidates = candidates
+        self.candidates.sort(key=lambda x: x.number)
         self.grid = grid
         self.barRenderer = barRenderer
 
@@ -292,6 +294,7 @@ class CandidatesTable(wx.grid.PyGridTableBase):
             elif col == 2:
                 return self.candidates[row].party
             elif col == 3:
+                # Display quota if candidate quota'd
                 return self.round(self.candidates[row].score,4)
             elif col == 4:
                 return ""
@@ -333,7 +336,7 @@ class InfoPanel(wx.Panel):
         self.GetSizer().Add(self.quotaText, 1, wx.TOP | wx.LEFT | wx.RIGHT, 15)
 
         self.speedSlider = wx.Slider(self, value=10, minValue=1, maxValue=100, style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS, size=(200,-1))
-        self.GetSizer().Add(self.speedSlider, 0, wx.BOTTOM, 5)
+        self.GetSizer().Add(self.speedSlider, 1, wx.BOTTOM, 5)
         self.Bind(wx.EVT_SCROLL, self.changeSpeed, self.speedSlider)
 
 
@@ -342,11 +345,11 @@ class InfoPanel(wx.Panel):
         self.GetSizer().Add(self.positionComboBox, 0, wx.TOP | wx.LEFT, 15)
         self.Bind(wx.EVT_COMBOBOX, self.changeRace)
 
-        self.redistributeButton = wx.Button(self, wx.ID_ANY, label='Redistribute', size=(125,25))
+        self.redistributeButton = wx.Button(self, wx.ID_ANY, label='Redistribute', size=(100,25))
         self.GetSizer().Add(self.redistributeButton, 0, wx.TOP | wx.LEFT, 15)
         self.Bind(wx.EVT_BUTTON, self.redistribute, self.redistributeButton)
 
-        self.completeButton = wx.Button(self, wx.ID_ANY, label='Complete', size=(125,25))
+        self.completeButton = wx.Button(self, wx.ID_ANY, label='Complete', size=(100,25))
         self.GetSizer().Add(self.completeButton, 0, wx.TOP | wx.LEFT, 15)
         self.Bind(wx.EVT_BUTTON, self.complete, self.completeButton)
 

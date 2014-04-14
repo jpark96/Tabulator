@@ -119,8 +119,6 @@ class Race:
 		return STOP
 
 	def runStepSenator(self):
-		self.candidates = sorted(self.candidates, key=lambda x: -1 * (x.score + x.quotaPlace))
-
 		if self.finished:
 			return FINISHED
 		if self.current_ballots:
@@ -128,11 +126,11 @@ class Race:
 			if ballot.candidate and ballot.candidate.state == LOSE:
 				ballot.candidate.score -= ballot.value
 			self.applyBallot(ballot)
-			# ballot.candidate.score = self.round(ballot.candidate.score, 4)
 			return CONTINUE
-
 		if (len(self.current_winners) + len(self.current_runners)) <= NUM_SENATORS:
 			self.current_runners.sort(key=lambda x: -1 * x.score)
+			for runner in self.current_runners:
+				runner.score = min(runner.score, self.quota)
 			self.winner = self.current_winners + self.current_runners
 			self.finished = True
 			return FINISHED
