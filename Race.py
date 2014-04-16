@@ -122,15 +122,14 @@ class Race:
 		if self.finished:
 			return FINISHED
 		if self.current_ballots:
-			ballot = self.current_ballots.pop(0)
-			if ballot.candidate and ballot.candidate.state == LOSE:
-				ballot.candidate.score -= ballot.value
-			self.applyBallot(ballot)
+			self.applyCurrentBallot()
 			return CONTINUE
 		if (len(self.current_winners) + len(self.current_runners)) <= NUM_SENATORS:
 			self.current_runners.sort(key=lambda x: -1 * x.score)
-			for runner in self.current_runners:
-				runner.score = min(runner.score, self.quota)
+			if self.current_runners[0].score >= self.quota:
+				candidate = self.current_runners.pop(0)
+				self.makeCandidateWin(candidate)
+				return CONTINUE
 			self.winner = self.current_winners + self.current_runners
 			self.finished = True
 			return FINISHED
@@ -141,17 +140,13 @@ class Race:
 
 		self.current_runners.sort(key=lambda x: x.score)
 		top_candidate = self.current_runners[-1]
+		top_score = top_candidate.score
 
-		# Someone Quota'd
-		if top_candidate.score >= self.quota:
-			top_candidate.state = WIN
-			self.current_runners.pop()
-			self.current_winners.append(top_candidate)
-			for ballot in top_candidate.ballots:
-				ballot.value = ballot.value * float(top_candidate.score - self.quota)/top_candidate.score
-				self.current_ballots.append(ballot)
-			top_candidate.score = self.quota
-			top_candidate.quotaPlace = NUM_SENATORS - len(self.current_winners) + 1
+		if top_score >= self.quota:
+			self.current_runners.sort(key=lambda x: -1 * x.score)
+			while self.current_runners[0].score >= self.quota and len(self.current_winners) < NUM_SENATORS:
+				candidate = self.current_runners.pop(0)
+				self.makeCandidateWin(candidate)
 			return CONTINUE
 		else:
 			last_candidate = self.current_runners.pop(0)
@@ -168,6 +163,20 @@ class Race:
 			shuffle(self.current_ballots)
 			return STOP
 
+	def makeCandidateWin(self, candidate):
+		candidate.state = WIN
+		self.current_winners.append(candidate)
+		for ballot in candidate.ballots:
+			ballot.value = ballot.value * float(candidate.score - self.quota)/candidate.score
+			self.current_ballots.append(ballot)
+		candidate.score = self.quota
+		candidate.quotaPlace = NUM_SENATORS - len(self.current_winners) + 1
+
+	def applyCurrentBallot(self):
+		ballot = self.current_ballots.pop(0)
+		if ballot.candidate and ballot.candidate.state == LOSE:
+			ballot.candidate.score -= ballot.value
+		self.applyBallot(ballot)
 
 class ElectionError(Exception):
 

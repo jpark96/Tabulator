@@ -19,10 +19,10 @@ class ElectionFrame(wx.Frame):
   
     def __init__(self, parent, title):
         wx.Frame.__init__(self, parent, title=title, size=(900, 680))
-            
+        
         self.InitUI()
         self.Centre()
-        self.Show()     
+        self.Show()
         
     def InitUI(self):
         # Create Status Bar
