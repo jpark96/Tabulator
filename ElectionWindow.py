@@ -211,6 +211,9 @@ class CandidatesPanel(scrolled.ScrolledPanel):
         self.grid.SetColSize(3, 100)
         self.grid.SetColSize(4, 250)
 
+        sizeInfo = gridlib.GridSizesInfo(18, [])
+        self.grid.SetRowSizes(sizeInfo)
+
     def refresh(self):
         self.candidates.sort(key=lambda x: -1 * (x.score + x.quotaPlace * self.quota))
         self.grid.Refresh()
@@ -322,6 +325,12 @@ class CandidatesTable(wx.grid.PyGridTableBase):
         attr.SetRenderer(renderer)
         self.grid.SetColAttr(4, attr)
 
+        for i in range(0,4):
+            attr = wx.grid.GridCellAttr()
+            font = wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False)
+            attr.SetFont(font)
+            self.grid.SetColAttr(i, attr)
+
 class InfoPanel(wx.Panel):
     def __init__(self, parent, quota):
         wx.Panel.__init__(self, parent)
@@ -329,19 +338,18 @@ class InfoPanel(wx.Panel):
         self.quota = quota
         self.SetSizer(wx.BoxSizer(wx.HORIZONTAL))
 
-        font = wx.Font(18, wx.DECORATIVE, wx.NORMAL, wx.BOLD)
+        font = wx.Font(14, wx.DECORATIVE, wx.NORMAL, wx.BOLD)
 
-        self.quotaText = wx.StaticText(self, label='QUOTA (Score to WIN): ' + str(self.quota))
+        self.quotaText = wx.StaticText(self, label='QUOTA: ' + str(self.quota))
         self.quotaText.SetFont(font)
         self.GetSizer().Add(self.quotaText, 1, wx.TOP | wx.LEFT | wx.RIGHT, 15)
 
-        self.speedSlider = wx.Slider(self, value=10, minValue=1, maxValue=100, style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS, size=(200,-1))
-        self.GetSizer().Add(self.speedSlider, 1, wx.BOTTOM, 5)
+        self.speedSlider = wx.Slider(self, value=10, minValue=1, maxValue=100, style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS, size=(150,-1))
+        self.GetSizer().Add(self.speedSlider, 0, wx.BOTTOM, 5)
         self.Bind(wx.EVT_SCROLL, self.changeSpeed, self.speedSlider)
 
-
         positions = ['President', 'Executive VP', 'External Affairs VP', 'Academic Affairs VP', 'Student Advocate', 'Senator']
-        self.positionComboBox = wx.ComboBox(self, choices=positions, style=wx.CB_READONLY)
+        self.positionComboBox = wx.ComboBox(self, choices=positions, style=wx.CB_READONLY, size=(150,25))
         self.GetSizer().Add(self.positionComboBox, 0, wx.TOP | wx.LEFT, 15)
         self.Bind(wx.EVT_COMBOBOX, self.changeRace)
 
