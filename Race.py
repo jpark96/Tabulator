@@ -45,16 +45,16 @@ class Race:
 		"""Increment a candidates score, and pop his number off the vote"""
 		if self.position not in ballot.votes.keys():
 			raise ElectionError("Position not found in ballot!")
-		vote = ballot.votes[self.position]
+		vote = ballot.votes[self.position]		# Vote = list of preference of a single Ballot object
 
 		while True:
 			if not vote:
-				self.spentBallots += ballot.value
+				self.spentBallots += ballot.value		# What is spentBallots? Why add ballot.value?
 				return False
-			candidate_num = int(vote.pop(0))
+			candidate_num = int(vote.pop(0))			# Pop off the current top candidate
 			if candidate_num not in self.numToCandidate.keys():
 				raise ElectionError("Candidate " + str(candidate_num) + " not found!")
-			if self.numToCandidate[candidate_num].state == RUNNING:
+			if self.numToCandidate[candidate_num].state == RUNNING:		# If candidate is reached quota or was eliminated, redue the loop
 				break
 
 		candidate = self.numToCandidate[candidate_num]
@@ -63,7 +63,7 @@ class Race:
 		ballot.candidate = candidate
 		return True
 
-	def countValidVotes(self, ballots):
+	def countValidVotes(self, ballots):		# Used to determine total number of votes cast for the position
 		count = 0
 		for ballot in ballots:
 			if self.position not in ballot.votes.keys():
@@ -92,7 +92,7 @@ class Race:
 			ballot = self.current_ballots.pop(0)
 			if ballot.candidate and ballot.candidate.state == LOSE:
 				ballot.candidate.score -= ballot.value
-			self.applyBallot(ballot)
+			self.applyBallot(ballot)			# applyCurrentBallots()
 			return CONTINUE
 		elif self.numOfRunners() == 1:
 			for candidate in self.candidates:
@@ -129,8 +129,8 @@ class Race:
 			if self.current_runners[0].score >= self.quota:
 				candidate = self.current_runners.pop(0)
 				self.makeCandidateWin(candidate)
-				return CONTINUE
-			self.winner = self.current_winners + self.current_runners
+				return CONTINUE				
+			self.winner = self.current_winners + self.current_runners	# Why do we need this code?
 			self.finished = True
 			return FINISHED
 		if len(self.current_winners) == NUM_SENATORS:
@@ -142,13 +142,13 @@ class Race:
 		top_candidate = self.current_runners[-1]
 		top_score = top_candidate.score
 
-		if top_score >= self.quota:
+		if top_score >= self.quota:	# Determining quota'd candidates for this round
 			self.current_runners.sort(key=lambda x: -1 * x.score)
 			while self.current_runners[0].score >= self.quota and len(self.current_winners) < NUM_SENATORS:
 				candidate = self.current_runners.pop(0)
 				self.makeCandidateWin(candidate)
 			return CONTINUE
-		else:
+		else:			# Eliminating lowest candidate
 			last_candidate = self.current_runners.pop(0)
 			self.current_ballots += last_candidate.ballots
 			last_candidate.state = LOSE
@@ -160,7 +160,7 @@ class Race:
 					curr_candidate.state = LOSE
 				else:
 					break
-			shuffle(self.current_ballots)
+			shuffle(self.current_ballots)		# Why shuffle?
 			return STOP
 
 	def makeCandidateWin(self, candidate):
