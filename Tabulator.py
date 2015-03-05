@@ -53,7 +53,7 @@ class Election:
 			votes = {}
 			for key in json_ballot.keys():
 				try:
-					votes[int(key)] = json_ballot[key]
+					votes[int(key)] = json_ballot[key]		# Candidate title --> Candidates in order of preference
 				except ValueError:
 					print('Invalid key in json: ' + key)
 
