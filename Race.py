@@ -129,7 +129,7 @@ class Race:
 			if self.current_runners[0].score >= self.quota:
 				candidate = self.current_runners.pop(0)
 				self.makeCandidateWin(candidate)
-				return CONTINUE				
+				return CONTINUE				# This allows people to redistribute the votes of quota'd candidate
 			self.winner = self.current_winners + self.current_runners	# Why do we need this code?
 			self.finished = True
 			return FINISHED
