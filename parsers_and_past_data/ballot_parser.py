@@ -5,6 +5,8 @@
 #############################################################
 
 # Parses 2014_vote_result.csv to ballots.json
+# UNIX command: python ballot_parser.py 2014_vote_result.csv [filename.json]
+# 	@returns filename.json
 
 import csv, sys, json
 from random import shuffle
@@ -73,4 +75,4 @@ with open(str(sys.argv[1]), 'rU') as f:
 
 # shuffle(output["ballots"])
 
-json.dump(output, new_file)
+json.dump(output, new_file, sort_keys=True, indent=4, separators=(',', ': '))
