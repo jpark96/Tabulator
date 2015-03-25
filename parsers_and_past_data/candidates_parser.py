@@ -1,5 +1,5 @@
 # Parses candidates2013raw.txt to candidates2013.json
-# UNIX command: python2.7 candidate_parser.py [text_file.txt] > [empty_file.json]
+# UNIX command: python2.7 candidate_parser.py [text_file.txt] [filename.json]
 
 import sys, json
 from collections import *
@@ -8,6 +8,7 @@ from collections import *
 CANDIDATE_POSITIONS = { "Academic VP": "academic_vp", "Executive VP": "executive_vp", "External VP": "external_vp", "President": "president", "Senator": "senator", "Student Advocate": "student_advocate"}
 
 candidates = defaultdict(list)
+new_file = open(str(sys.argv[2]), 'w')
 
 with open(str(sys.argv[1]), 'rU') as f:
 	while True:
@@ -22,4 +23,5 @@ with open(str(sys.argv[1]), 'rU') as f:
 		position = CANDIDATE_POSITIONS[line[4][1:-2]]
 		
 		candidates[position].append(candidate)
-print(json.dumps(candidates, sort_keys=True, indent=4, separators=(',', ': ')))
+# print(json.dumps(candidates, sort_keys=True, indent=4, separators=(',', ': ')))
+json.dump(candidates, new_file, sort_keys=True, indent=4, separators=(',', ': '))
