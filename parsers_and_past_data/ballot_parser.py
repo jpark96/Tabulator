@@ -4,11 +4,15 @@
 #			   Copyright Elections Council 2013				#
 #############################################################
 
+# Parses 2014_vote_result.csv to ballots.json
+
 import csv, sys, json
 from random import shuffle
 
 count = 0
 voter_id = '0'
+
+print(sys.argv[0]);
 
 new_file = open(str(sys.argv[2]), 'w')
 
