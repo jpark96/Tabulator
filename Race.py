@@ -120,8 +120,35 @@ class Race:
 				count += 1
 		return count
 
+		def numOfWinners(self):
+			"""Return the number of candidates who won the race.
+				@parameter: None
+				@return: number_of_runners (int)
+
+				>>> ballot1 = Ballot({2: [101]})
+				>>> ballot2 = Ballot({2: [101]})
+				>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+				>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+				>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+				>>> race.numOfWinners()
+				0
+				>>> race.runStepExecutives() 		# Apply first ballot
+				1
+				>>> race.runStepExecutives() 		# Apply second ballot
+				1
+				>>> race.runStepExecutives() 		# Make tyrion win
+				2
+				>>> race.numOfWinners() 			
+				1
+			"""
+		count = 0
+		for candidate in self.candidates:
+			if candidate.state == WIN:
+				count += 1
+		return count
+
 	def runStepExecutives(self):
-		"""Runs one iteration of the executive race. This method behaves does one of the following actions:
+		"""Runs one iteration of the executive race. This method does one of the following actions:
 				1. If there are ballots in the race, apply the first ballot in the array.
 				2. If there is only one runner, make that runner win.
 				3. If candidate has reached quota, make the candidate win by setting the candidate's score to quota, setting candidate's state
@@ -150,9 +177,11 @@ class Race:
 			>>> race.runStepExecutives() 		# tyrion's score is equal to quota, so make him win.
 			2
 		"""
+		# CONTINUE to apply current_ballots while it exists.
 		if self.current_ballots:
 			self.applyCurrentBallot()
 			return CONTINUE
+		# FINISHED if there is only one runner.
 		elif self.numOfRunners() == 1:
 			for candidate in self.candidates:
 				if candidate.state == RUNNING:
@@ -161,6 +190,7 @@ class Race:
 					self.finished = True
 					self.winner.append(candidate)
 					return FINISHED
+		# FINISHED if one of the candidates reached quota.
 		for candidate in self.candidates:
 			if candidate.score >= self.quota:
 				candidate.state = WIN
@@ -168,14 +198,23 @@ class Race:
 				self.finished = True
 				self.winner.append(candidate)
 				return FINISHED
+		# Eliminate candidates with the lowest scores and check for ties
 		else:
 			self.eliminateLowestCandidates()
 			self.checkTies()
 			return STOP
 
 	def runStepSenator(self):
-		if self.finished:
-			return FINISHED
+		"""Runs one iteration of the senatorial race. This method does one of the following actions:
+				1. Applies current_ballots, then returns CONTINUE.
+				2. Handles the case when NUM_SENATORS of candidates are RUNNING or WIN, then returns FINISHED.
+				3. Handles the case when there are NUM_SENATORS winners, then returns FINISHED.
+				4. Make quota'd RUNNING candidates WIN, then returns CONTINUE.
+				5. Eliminates candidates with the fewest score, then returns STOP.
+			@parameter: None
+			@return: STOP, CONTINUE, FINISHED (0, 1, 2)
+			@error: ElectionError('There is a tie!')
+		"""	
 		if self.current_ballots:
 			self.applyCurrentBallot()
 			return CONTINUE
@@ -320,7 +359,7 @@ class Race:
 			>>> ned.state = RUNNING
 			>>> ned.score = 1
 			>>> race.eliminateLowestCandidates()
-			[101, 102]
+			[102, 101]
 		"""
 		removedCandidatesNum = []
 		self.candidates.sort(key=lambda x: -1 * x.score) 		# Sorts candidates from lowest score to highest score
