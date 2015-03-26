@@ -6,7 +6,7 @@
 
 from constants import *
 from random import shuffle
-from Tabulator import Candidate 		# Needed for doctest in Race.__init__()
+# from Tabulator import Candidate 		# Needed for doctest in Race.__init__()
 import math
 import time
 import sys
@@ -61,58 +61,6 @@ class Race:
 		self.numToCandidate = {candidate.number: candidate for candidate in candidates}
 
 
-	def applyBallot(self, ballot):
-		"""Increment a candidates score, and pop his number off the vote. Does NOT affect the state of a candidate.
-			@parameters: Ballot object
-			@error: Position not found
-					Candidate not found
-
-			>>> ballot1 = Ballot({1: [101]})
-			>>> ballot2 = Ballot({1: [101]})
-			>>> tyrion = Candidate(101, 'Tyrion', 1, 'Lanister')
-			>>> ned = Candidate(102, 'Ned', 1, 'Stark')
-			>>> race = Race(None, 1, [tyrion, ned], [ballot1, ballot2])
-			>>> race.candidates[0].score
-			0
-			>>> race.candidates[1].score
-			0
-			>>> race.applyBallot(ballot1)
-			True
-			>>> race.candidates[0].score
-			1
-			>>> race.candidates[1].score
-			0
-			>>> race.applyBallot(ballot2)
-			True
-			>>> race.candidates[0].score
-			2
-			>>> race.applyBallot(ballot1)
-			False
-			>>> race.candidates[0].score
-			2
-			>>> race.candidates[1].score
-			0
-
-		"""
-		if self.position not in ballot.votes.keys():
-			raise ElectionError("Position not found in ballot!")
-		vote = ballot.votes[self.position]		# Vote = list of preference of a single Ballot object
-
-		while True:
-			if not vote:
-				self.spentBallots += ballot.value		# What is spentBallots? Why add ballot.value?
-				return False
-			candidate_num = int(vote.pop(0))			# Pop off the current top candidate
-			if candidate_num not in self.numToCandidate.keys():
-				raise ElectionError("Candidate " + str(candidate_num) + " not found!")
-			if self.numToCandidate[candidate_num].state == RUNNING:		# If candidate is reached quota or was eliminated, redue the loop
-				break
-
-		candidate = self.numToCandidate[candidate_num]
-		candidate.score += ballot.value
-		candidate.ballots.append(ballot)
-		ballot.candidate = candidate
-		return True
 
 	def countValidVotes(self, ballots):		# Used to determine total number of votes cast for the position
 		"""Takes in an array of ballots.
@@ -203,7 +151,7 @@ class Race:
 			2
 		"""
 		if self.current_ballots:
-			self.applyCurrentBallot()			# applyCurrentBallot()
+			self.applyCurrentBallot()
 			return CONTINUE
 		elif self.numOfRunners() == 1:
 			for candidate in self.candidates:
@@ -220,14 +168,10 @@ class Race:
 				self.finished = True
 				self.winner.append(candidate)
 				return FINISHED
-		self.candidates.sort(key=lambda x: -1 * x.score) 		# Sorts candidates from highest score to lowest score
-		worst_score = sys.maxint
-		for candidate in reversed(self.candidates):
-			if candidate.state == RUNNING and candidate.score <= worst_score:
-				self.current_ballots += candidate.ballots
-				candidate.state = LOSE
-				worst_score = candidate.score
-		return STOP
+		else:
+			self.eliminateLowestCandidates()
+			self.checkTies()
+			return STOP
 
 	def runStepSenator(self):
 		if self.finished:
@@ -299,6 +243,60 @@ class Race:
 			ballot.candidate.score -= ballot.value
 		self.applyBallot(ballot)
 
+
+	def applyBallot(self, ballot):
+		"""Increment a candidates score, and pop his number off the vote. Does NOT affect the state of a candidate.
+			@parameters: Ballot object
+			@error: Position not found
+					Candidate not found
+
+			>>> ballot1 = Ballot({1: [101]})
+			>>> ballot2 = Ballot({1: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 1, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 1, 'Stark')
+			>>> race = Race(None, 1, [tyrion, ned], [ballot1, ballot2])
+			>>> race.candidates[0].score
+			0
+			>>> race.candidates[1].score
+			0
+			>>> race.applyBallot(ballot1)
+			True
+			>>> race.candidates[0].score
+			1
+			>>> race.candidates[1].score
+			0
+			>>> race.applyBallot(ballot2)
+			True
+			>>> race.candidates[0].score
+			2
+			>>> race.applyBallot(ballot1)
+			False
+			>>> race.candidates[0].score
+			2
+			>>> race.candidates[1].score
+			0
+
+		"""
+		if self.position not in ballot.votes.keys():
+			raise ElectionError("Position not found in ballot!")
+		vote = ballot.votes[self.position]		# Vote = list of preference of a single Ballot object
+
+		while True:
+			if not vote:
+				self.spentBallots += ballot.value		# What is spentBallots? Why add ballot.value?
+				return False
+			candidate_num = int(vote.pop(0))			# Pop off the current top candidate
+			if candidate_num not in self.numToCandidate.keys():
+				raise ElectionError("Candidate " + str(candidate_num) + " not found!")
+			if self.numToCandidate[candidate_num].state == RUNNING:		# If candidate is reached quota or was eliminated, redue the loop
+				break
+
+		candidate = self.numToCandidate[candidate_num]
+		candidate.score += ballot.value
+		candidate.ballots.append(ballot)
+		ballot.candidate = candidate
+		return True
+
 	def eliminateLowestCandidates(self):
 		"""Eliminates the candidates with the lowest score by changing candidate's state to LOSE. Note that this does not mutate the
 			race.candidates array. BETTER NAME is makeLoseLowestCandidates.
@@ -325,17 +323,44 @@ class Race:
 			[101, 102]
 		"""
 		removedCandidatesNum = []
-		self.candidates.sort(key=lambda x: x.score) 		# Sorts candidates from lowest score to highest score
+		self.candidates.sort(key=lambda x: -1 * x.score) 		# Sorts candidates from lowest score to highest score
 		worst_score = sys.maxint
-		for candidate in self.candidates:
+		for candidate in reversed(self.candidates):
 			if candidate.state == RUNNING and candidate.score <= worst_score:
 				self.current_ballots += candidate.ballots
 				candidate.state = LOSE
 				removedCandidatesNum.append(candidate.number)
 				worst_score = candidate.score
-			else:
-				break
 		return removedCandidatesNum
+
+	def checkTies(self):
+		"""Checks if there is a tie. For an executive race, 
+			@parameter: None
+			@returns: None
+			@error: ElectionError('There is a tie!')
+
+			>>> ballot1 = Ballot({2: [101]})
+			>>> ballot2 = Ballot({2: [102]})
+			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+			>>> race.runStepExecutives() 		# Applies ballot1
+			1
+			>>> race.runStepExecutives() 		# Applies ballot2
+			1
+			>>> race.runStepExecutives() 		# Deletes the lowest (only) two candidates, and raises ElectionError
+			Traceback (most recent call last):
+			ElectionError: 'There is a tie!'
+			>>> race.numOfRunners()
+			0
+		"""
+		if self.position != SENATOR:
+			if self.numOfRunners() == 0:
+				raise ElectionError('There is a tie!')
+		else:
+			if self.numOfRunners() < NUM_SENATORS:
+				raise ElectionError('There is a tie!')
+
 
 
 	# def removeCandidate(candidate_id):
