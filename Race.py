@@ -6,6 +6,7 @@
 
 from constants import *
 from random import shuffle
+# from Tabulator import Candidate 		# Needed for doctest in Race.__init__()
 import math
 import time
 import sys
@@ -14,6 +15,25 @@ class Race:
 # A race refers to an election for one particular position
 
 	def __init__(self, election, position, candidates, ballots):
+		"""Instantiate a Race object.
+			@parameters: election (Election), position (int in POSITIONS), candidates (Candidate[]), ballots(Ballot[])
+			@return: None
+
+			>>> ballot1 = Ballot({1: [101]})
+			>>> ballot2 = Ballot({1: [101]})
+			>>> tyrion = Candidate(101, "Tyrion", 1, "Lanister")
+			>>> ned = Candidate(102, "Ned", 1, "Stark")
+			>>> race = Race(None, 1, [tyrion, ned], [ballot1, ballot2])
+			>>> race.election
+			>>> race.position
+			1
+			>>> race.ballots[0].votes
+			{1: [101], 2: [], 3: [], 4: [], 5: [], 6: []}
+			>>> race.ballots[1].votes
+			{1: [101], 2: [], 3: [], 4: [], 5: [], 6: []}
+			>>> race.quota
+			1.0
+		"""
 		self.election = election
 		self.position = position
 		self.candidates = candidates
@@ -42,7 +62,38 @@ class Race:
 
 
 	def applyBallot(self, ballot):
-		"""Increment a candidates score, and pop his number off the vote"""
+		"""Increment a candidates score, and pop his number off the vote.
+			@parameters: Ballot object
+			@error: Position not found
+					Candidate not found
+
+			>>> ballot1 = Ballot({1: [101]})
+			>>> ballot2 = Ballot({1: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 1, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 1, 'Stark')
+			>>> race = Race(None, 1, [tyrion, ned], [ballot1, ballot2])
+			>>> race.candidates[0].score
+			0
+			>>> race.candidates[1].score
+			0
+			>>> race.applyBallot(ballot1)
+			True
+			>>> race.candidates[0].score
+			1
+			>>> race.candidates[1].score
+			0
+			>>> race.applyBallot(ballot2)
+			True
+			>>> race.candidates[0].score
+			2
+			>>> race.applyBallot(ballot1)
+			False
+			>>> race.candidates[0].score
+			2
+			>>> race.candidates[1].score
+			0
+
+		"""
 		if self.position not in ballot.votes.keys():
 			raise ElectionError("Position not found in ballot!")
 		vote = ballot.votes[self.position]		# Vote = list of preference of a single Ballot object
@@ -64,6 +115,27 @@ class Race:
 		return True
 
 	def countValidVotes(self, ballots):		# Used to determine total number of votes cast for the position
+		"""Takes in an array of ballots.
+			@parameter: ballots (Ballot[])
+			@return: count (number of valid votes)
+
+			>>> ballot1 = Ballot({1: [101]})
+			>>> ballot2 = Ballot({1: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 1, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 1, 'Stark')
+			>>> race = Race(None, 1, [tyrion, ned], [ballot1, ballot2])
+			>>> ballot1 = Ballot({1: [101]})
+			>>> ballot2 = Ballot({1: [101]})
+			>>> ballot3 = Ballot({1: [101], 3: [102]})
+			>>> race.countValidVotes([])
+			0
+			>>> ballot_array1 = [ballot1, ballot2]
+			>>> race.countValidVotes(ballot_array1)
+			2
+			>>> ballot_array1 = ballot_array1 + [ballot3]
+			>>> race.countValidVotes(ballot_array1)
+			3
+		"""
 		count = 0
 		for ballot in ballots:
 			if self.position not in ballot.votes.keys():
@@ -73,12 +145,25 @@ class Race:
 				count += 1
 		return count
 
-	def initializeFirstVotes(self, ballot):
-		if self.applyBallot(ballot):
-			self.validVotes += 1
-
 	def numOfRunners(self):
-		"""Return the number of candidates still running"""
+		"""Return the number of candidates still running
+			@parameter: None
+			@return: number_of_runners (int)
+
+			>>> ballot1 = Ballot({1: [101]})
+			>>> ballot2 = Ballot({1: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 1, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 1, 'Stark')
+			>>> race = Race(None, 1, [tyrion, ned], [ballot1, ballot2])
+			>>> race.numOfRunners()
+			2
+			>>> race.runStepSenator()
+			True
+			>>> race.runStepSenator()
+			True
+			>>> race.numOfRunners() 			
+			1
+		"""
 		count = 0
 		for candidate in self.candidates:
 			if candidate.state == RUNNING:
@@ -86,13 +171,32 @@ class Race:
 		return count
 
 	def runStepExecutives(self):
+		"""Runs one iteration of the executive race. There are 
+			@parameter: None
+			@return: STOP, CONTINUE, FINISHED
+
+			>>> ballot1 = Ballot({2: [101]})
+			>>> ballot2 = Ballot({2: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+			>>> race.runStepExecutives()
+			1
+			>>> race.current_ballots[0].votes
+			{1: [], 2: [101], 3: [], 4: [], 5: [], 6: []}
+			>>> race.current_ballots[1].votes
+			IndexError
+			>>> race.runStepExecutives()
+			1
+			>>> race.numOfRunners()
+			2
+			>>> race.runStepExecutives()
+
+		"""
 		if self.finished:
 			return FINISHED
 		if self.current_ballots:
-			ballot = self.current_ballots.pop(0)
-			if ballot.candidate and ballot.candidate.state == LOSE:
-				ballot.candidate.score -= ballot.value
-			self.applyBallot(ballot)			# applyCurrentBallots()
+			self.applyCurrentBallot()			# applyCurrentBallot()
 			return CONTINUE
 		elif self.numOfRunners() == 1:
 			for candidate in self.candidates:
@@ -173,10 +277,35 @@ class Race:
 		candidate.quotaPlace = NUM_SENATORS - len(self.current_winners) + 1
 
 	def applyCurrentBallot(self):
+		"""Count current ballot. If candidate loses, redistribute ballots.
+			@parameter: None
+			@return: None
+
+			>>> ballot1 = Ballot({2: [101]})
+			>>> ballot2 = Ballot({2: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+		"""
 		ballot = self.current_ballots.pop(0)
 		if ballot.candidate and ballot.candidate.state == LOSE:
 			ballot.candidate.score -= ballot.value
 		self.applyBallot(ballot)
+
+
+
+	# def removeCandidate(candidate_id):
+	# 	"""Removes the candidate with the candidate_id (str)
+	# 		@parameter: candidate_id (str)
+	# 		@return: candidate_id (str) or False
+	# 		@error: ValueError when input is not str
+
+	# 	>>> 
+	# 	"""
+	# 	if type(candidate_id) != str:
+	# 		raise ValueError("Input must be a str.")
+
+
 
 class ElectionError(Exception):
 
