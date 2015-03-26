@@ -174,7 +174,11 @@ class Race:
 
 	def runStepExecutives(self):
 		"""Runs one iteration of the executive race. This method behaves does one of the following actions:
-				1. Finishes the race, if the race is 
+				1. If there are ballots in the race, apply the first ballot in the array.
+				2. If there is only one runner, make that runner win.
+				3. If candidate has reached quota, make the candidate win by setting the candidate's score to quota, setting candidate's state
+					to win, and return FINISHED (2).
+				4. Else, eliminate the lowest candidate and redistribute his vote.
 			@parameter: None
 			@return: STOP, CONTINUE, FINISHED (0, 1, 2)
 
@@ -198,8 +202,6 @@ class Race:
 			>>> race.runStepExecutives() 		# tyrion's score is equal to quota, so make him win.
 			2
 		"""
-		if self.finished:
-			return FINISHED
 		if self.current_ballots:
 			self.applyCurrentBallot()			# applyCurrentBallot()
 			return CONTINUE
@@ -218,7 +220,7 @@ class Race:
 				self.finished = True
 				self.winner.append(candidate)
 				return FINISHED
-		self.candidates.sort(key=lambda x: -1 * x.score)
+		self.candidates.sort(key=lambda x: -1 * x.score) 		# Sorts candidates from highest score to lowest score
 		worst_score = sys.maxint
 		for candidate in reversed(self.candidates):
 			if candidate.state == RUNNING and candidate.score <= worst_score:
@@ -297,6 +299,43 @@ class Race:
 			ballot.candidate.score -= ballot.value
 		self.applyBallot(ballot)
 
+	def eliminateLowestCandidates(self):
+		"""Eliminates the candidates with the lowest score by changing candidate's state to LOSE. Note that this does not mutate the
+			race.candidates array. BETTER NAME is makeLoseLowestCandidates.
+			@parameter: None
+			@return: list of eliminated candidate's number (int)
+
+			>>> ballot1 = Ballot({2: [101]})
+			>>> ballot2 = Ballot({2: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+			>>> race.runStepExecutives()
+			1
+			>>> race.eliminateLowestCandidates()
+			[102]
+			>>> race.numOfRunners()
+			1
+			>>> len(race.candidates)
+			2
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+			>>> ned.state = RUNNING
+			>>> ned.score = 1
+			>>> race.eliminateLowestCandidates()
+			[101, 102]
+		"""
+		removedCandidatesNum = []
+		self.candidates.sort(key=lambda x: x.score) 		# Sorts candidates from lowest score to highest score
+		worst_score = sys.maxint
+		for candidate in self.candidates:
+			if candidate.state == RUNNING and candidate.score <= worst_score:
+				self.current_ballots += candidate.ballots
+				candidate.state = LOSE
+				removedCandidatesNum.append(candidate.number)
+				worst_score = candidate.score
+			else:
+				break
+		return removedCandidatesNum
 
 
 	# def removeCandidate(candidate_id):
