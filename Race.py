@@ -6,7 +6,7 @@
 
 from constants import *
 from random import shuffle
-# from Tabulator import Candidate 		# Needed for doctest in Race.__init__()
+from Tabulator import Candidate 		# Needed for doctest in Race.__init__()
 import math
 import time
 import sys
@@ -200,7 +200,7 @@ class Race:
 				return FINISHED
 		# Eliminate candidates with the lowest scores and check for ties
 		else:
-			self.eliminateLowestCandidates()
+			self.makeLoseLowestCandidates()
 			self.checkTies()
 			return STOP
 
@@ -336,9 +336,9 @@ class Race:
 		ballot.candidate = candidate
 		return True
 
-	def eliminateLowestCandidates(self):
+	def makeLoseLowestCandidates(self):
 		"""Eliminates the candidates with the lowest score by changing candidate's state to LOSE. Note that this does not mutate the
-			race.candidates array. BETTER NAME is makeLoseLowestCandidates.
+			race.candidates array.
 			@parameter: None
 			@return: list of eliminated candidate's number (int)
 
@@ -349,7 +349,7 @@ class Race:
 			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
 			>>> race.runStepExecutives()
 			1
-			>>> race.eliminateLowestCandidates()
+			>>> race.makeLoseLowestCandidates()
 			[102]
 			>>> race.numOfRunners()
 			1
@@ -358,7 +358,7 @@ class Race:
 			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
 			>>> ned.state = RUNNING
 			>>> ned.score = 1
-			>>> race.eliminateLowestCandidates()
+			>>> race.makeLoseLowestCandidates()
 			[102, 101]
 		"""
 		removedCandidatesNum = []
@@ -397,21 +397,28 @@ class Race:
 			if self.numOfRunners() == 0:
 				raise ElectionError('There is a tie!')
 		else:
-			if self.numOfRunners() < NUM_SENATORS:
+			if len(self.current_winners) + len(self.current_runners) < NUM_SENATORS:
 				raise ElectionError('There is a tie!')
 
+	def removeCandidate(self, candidate_num):
+		"""Removes the candidate with the candidate_id (str)
+			@parameter: candidate_id (str)
+			@return: candidate_id (str) or False
+			@error: ValueError when input is not int
 
-
-	# def removeCandidate(candidate_id):
-	# 	"""Removes the candidate with the candidate_id (str)
-	# 		@parameter: candidate_id (str)
-	# 		@return: candidate_id (str) or False
-	# 		@error: ValueError when input is not str
-
-	# 	>>> 
-	# 	"""
-	# 	if type(candidate_id) != str:
-	# 		raise ValueError("Input must be a str.")
+			>>> ballot1 = Ballot({2: [101, 102]})
+			>>> ballot2 = Ballot({2: [102]})
+			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+			>>> race.removeCandidate(101)
+			>>> race.runStepExecutives() 		# Applies ballot1
+			1
+			>>> race.runStepExecutives()
+			1
+		"""
+		if type(candidate_num) != int:
+			raise ValueError("Input must be a int.")
 
 
 
