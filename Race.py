@@ -6,7 +6,7 @@
 
 from constants import *
 from random import shuffle
-# from Tabulator import Candidate 		# Needed for doctest in Race.__init__()
+from Tabulator import Candidate 		# Needed for doctest in Race.__init__()
 import math
 import time
 import sys
@@ -62,7 +62,7 @@ class Race:
 
 
 	def applyBallot(self, ballot):
-		"""Increment a candidates score, and pop his number off the vote.
+		"""Increment a candidates score, and pop his number off the vote. Does NOT affect the state of a candidate.
 			@parameters: Ballot object
 			@error: Position not found
 					Candidate not found
@@ -146,21 +146,23 @@ class Race:
 		return count
 
 	def numOfRunners(self):
-		"""Return the number of candidates still running
+		"""Return the number of candidates still running in the race.
 			@parameter: None
 			@return: number_of_runners (int)
 
-			>>> ballot1 = Ballot({1: [101]})
-			>>> ballot2 = Ballot({1: [101]})
-			>>> tyrion = Candidate(101, 'Tyrion', 1, 'Lanister')
-			>>> ned = Candidate(102, 'Ned', 1, 'Stark')
-			>>> race = Race(None, 1, [tyrion, ned], [ballot1, ballot2])
+			>>> ballot1 = Ballot({2: [101]})
+			>>> ballot2 = Ballot({2: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
 			>>> race.numOfRunners()
 			2
-			>>> race.runStepSenator()
-			True
-			>>> race.runStepSenator()
-			True
+			>>> race.runStepExecutives() 		# Apply first ballot
+			1
+			>>> race.runStepExecutives() 		# Apply second ballot
+			1
+			>>> race.runStepExecutives() 		# Make tyrion win
+			2
 			>>> race.numOfRunners() 			
 			1
 		"""
@@ -171,27 +173,30 @@ class Race:
 		return count
 
 	def runStepExecutives(self):
-		"""Runs one iteration of the executive race. There are 
+		"""Runs one iteration of the executive race. This method behaves does one of the following actions:
+				1. Finishes the race, if the race is 
 			@parameter: None
-			@return: STOP, CONTINUE, FINISHED
+			@return: STOP, CONTINUE, FINISHED (0, 1, 2)
 
 			>>> ballot1 = Ballot({2: [101]})
 			>>> ballot2 = Ballot({2: [101]})
 			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
 			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
 			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
-			>>> race.runStepExecutives()
+			>>> len(race.current_ballots)
+			2
+			>>> race.runStepExecutives() 		# Applies ballot1
 			1
-			>>> race.current_ballots[0].votes
-			{1: [], 2: [101], 3: [], 4: [], 5: [], 6: []}
-			>>> race.current_ballots[1].votes
-			IndexError
-			>>> race.runStepExecutives()
+			>>> len(race.current_ballots)
 			1
+			>>> race.runStepExecutives() 		# Applies ballot2
+			1
+			>>> len(race.current_ballots)
+			0
 			>>> race.numOfRunners()
 			2
-			>>> race.runStepExecutives()
-
+			>>> race.runStepExecutives() 		# tyrion's score is equal to quota, so make him win.
+			2
 		"""
 		if self.finished:
 			return FINISHED
