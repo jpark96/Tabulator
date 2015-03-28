@@ -6,7 +6,7 @@
 
 from constants import *
 from random import shuffle
-from Tabulator import Candidate 		# Needed for doctest in Race.__init__()
+# from Tabulator import Candidate 		# Needed for doctest in Race.__init__()
 import math
 import time
 import sys
@@ -53,9 +53,8 @@ class Race:
 			self.quota = round(float(self.numValidVotes)/(NUM_SENATORS+1) + 1)
 		self.winner = []
 
-		# For senators
-		self.current_winners = []
-		self.current_runners = candidates[:]
+		# Array of removed Candidates
+		self.removedCandidates = []
 
 		# (HACK) Can't hash candidates, so temporarily use their candidate number as a key
 		self.numToCandidate = {candidate.number: candidate for candidate in candidates}
@@ -90,60 +89,6 @@ class Race:
 				raise ElectionError("Position not found in ballot!")
 			vote = ballot.votes[self.position]
 			if vote:
-				count += 1
-		return count
-
-	def numOfRunners(self):
-		"""Return the number of candidates still running in the race.
-			@parameter: None
-			@return: number_of_runners (int)
-
-			>>> ballot1 = Ballot({2: [101]})
-			>>> ballot2 = Ballot({2: [101]})
-			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
-			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
-			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
-			>>> race.numOfRunners()
-			2
-			>>> race.runStepExecutives() 		# Apply first ballot
-			1
-			>>> race.runStepExecutives() 		# Apply second ballot
-			1
-			>>> race.runStepExecutives() 		# Make tyrion win
-			2
-			>>> race.numOfRunners() 			
-			1
-		"""
-		count = 0
-		for candidate in self.candidates:
-			if candidate.state == RUNNING:
-				count += 1
-		return count
-
-		def numOfWinners(self):
-			"""Return the number of candidates who won the race.
-				@parameter: None
-				@return: number_of_runners (int)
-
-				>>> ballot1 = Ballot({2: [101]})
-				>>> ballot2 = Ballot({2: [101]})
-				>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
-				>>> ned = Candidate(102, 'Ned', 2, 'Stark')
-				>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
-				>>> race.numOfWinners()
-				0
-				>>> race.runStepExecutives() 		# Apply first ballot
-				1
-				>>> race.runStepExecutives() 		# Apply second ballot
-				1
-				>>> race.runStepExecutives() 		# Make tyrion win
-				2
-				>>> race.numOfWinners() 			
-				1
-			"""
-		count = 0
-		for candidate in self.candidates:
-			if candidate.state == WIN:
 				count += 1
 		return count
 
@@ -214,57 +159,188 @@ class Race:
 			@parameter: None
 			@return: STOP, CONTINUE, FINISHED (0, 1, 2)
 			@error: ElectionError('There is a tie!')
-		"""	
+
+			>>> ballot1 = Ballot({1: [101]})
+			>>> ballot2 = Ballot({1: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 1, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 1, 'Stark')
+			>>> race = Race(None, 1, [tyrion, ned], [ballot1, ballot2])
+			>>> len(race.current_ballots)
+			2
+			>>> race.runStepSenator() 		# Applies ballot1
+			1
+			>>> len(race.current_ballots)
+			1
+			>>> race.runStepSenator() 		# Applies ballot2
+			1
+			>>> len(race.current_ballots)
+			0
+			>>> race.runStepSenator() 		# Makes tyrion win
+			1
+			>>> race.numOfRunners()
+			1
+		"""
+		current_runners = self.currentRunners()
+		current_runners.sort(key=lambda x: -1 * x.score) 	# Sorts runners from those with highest score to lowest score
+		current_winners = self.currentWinners()
+		number_of_winners = self.numOfWinners()
+		number_of_runners = self.numOfRunners()
+		top_candidate = current_runners[0]
+		worst_candidate = current_runners[-1]
+
 		if self.current_ballots:
 			self.applyCurrentBallot()
 			return CONTINUE
-		if (len(self.current_winners) + len(self.current_runners)) <= NUM_SENATORS:
-			self.current_runners.sort(key=lambda x: -1 * x.score)
-			if self.current_runners[0].score >= self.quota:
-				candidate = self.current_runners.pop(0)
-				self.makeCandidateWin(candidate)
+		elif (number_of_winners + number_of_runners) <= NUM_SENATORS:
+			if top_candidate.score >= self.quota:
+				self.makeCandidateWin(top_candidate)
 				return CONTINUE				# This allows people to redistribute the votes of quota'd candidate
-			self.winner = self.current_winners + self.current_runners	# Why do we need this code?
-			self.finished = True
+			self.winner = current_winners + current_runners	# Why do we need this code?
 			return FINISHED
-		if len(self.current_winners) == NUM_SENATORS:
-			self.winner = self.current_winners
-			self.finished = True
+		elif number_of_winners == NUM_SENATORS:
+			self.winner = current_winners
 			return FINISHED
+		else:
+			if top_candidate.score >= self.quota and number_of_winners < NUM_SENATORS:	# Determining quota'd candidates for this round
+				self.makeCandidateWin(top_candidate)
+				return CONTINUE
+			else:			# Eliminating lowest candidate
+				self.makeLoseLowestCandidates()
+				shuffle(self.current_ballots)		# Why shuffle?
+				return STOP
 
-		self.current_runners.sort(key=lambda x: x.score)
-		top_candidate = self.current_runners[-1]
-		top_score = top_candidate.score
+	def currentRunners(self):
+		"""Return the current candidates still running in the race. Does not include runners who WIN or LOSE.
+			@parameter: None
+			@return: Candidate[]
 
-		if top_score >= self.quota:	# Determining quota'd candidates for this round
-			self.current_runners.sort(key=lambda x: -1 * x.score)
-			while self.current_runners[0].score >= self.quota and len(self.current_winners) < NUM_SENATORS:
-				candidate = self.current_runners.pop(0)
-				self.makeCandidateWin(candidate)
-			return CONTINUE
-		else:			# Eliminating lowest candidate
-			last_candidate = self.current_runners.pop(0)
-			self.current_ballots += last_candidate.ballots
-			last_candidate.state = LOSE
-			# Take out all tied candidates
-			while True:
-				if self.current_runners[0].score == last_candidate.score:
-					curr_candidate = self.current_runners.pop(0)
-					self.current_ballots += curr_candidate.ballots
-					curr_candidate.state = LOSE
-				else:
-					break
-			shuffle(self.current_ballots)		# Why shuffle?
-			return STOP
+			>>> ballot1 = Ballot({2: [101]})
+			>>> ballot2 = Ballot({2: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+			>>> race.currentRunners()[0].number
+			101
+			>>> race.currentRunners()[1].number
+			102
+			>>> race.runStepExecutives() 		# Apply first ballot
+			1
+			>>> race.runStepExecutives() 		# Apply second ballot
+			1
+			>>> race.runStepExecutives() 		# Make tyrion win
+			2
+			>>> race.currentRunners()[0].number
+			102
+		"""
+		array = []
+		for candidate in self.candidates:
+			if candidate.state == RUNNING:
+				array.append(candidate)
+		return array
+
+	def currentWinners(self):
+		"""Return the current candidates who WIN.
+			@parameter: None
+			@return: Candidate[]
+
+			>>> ballot1 = Ballot({2: [101]})
+			>>> ballot2 = Ballot({2: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+			>>> race.currentWinners()
+			[]
+			>>> race.runStepExecutives() 		# Apply first ballot
+			1
+			>>> race.runStepExecutives() 		# Apply second ballot
+			1
+			>>> race.runStepExecutives() 		# Make tyrion win
+			2
+			>>> race.currentWinners()[0].number
+			101
+		"""
+		array = []
+		for candidate in self.candidates:
+			if candidate.state == WIN:
+				array.append(candidate)
+		return array
 
 	def makeCandidateWin(self, candidate):
+		"""Makes candidate win
+			@parameter: Candidate to win
+			@return: None
+
+			>>> ballot1 = Ballot({2: [101]})
+			>>> ballot2 = Ballot({2: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+			>>> race.makeCandidateWin(tyrion) 		# Makes tyrion win
+			>>> race.numOfRunners()
+			1
+			>>> race.numOfWinners()
+			1
+		"""
 		candidate.state = WIN
-		self.current_winners.append(candidate)
 		for ballot in candidate.ballots:
 			ballot.value = ballot.value * float(candidate.score - self.quota)/candidate.score
 			self.current_ballots.append(ballot)
 		candidate.score = self.quota
-		candidate.quotaPlace = NUM_SENATORS - len(self.current_winners) + 1
+		candidate.quotaPlace = NUM_SENATORS - self.numOfWinners() + 1
+
+	def numOfRunners(self):
+		"""Return the number of candidates still running in the race.
+			@parameter: None
+			@return: number_of_runners (int)
+
+			>>> ballot1 = Ballot({2: [101]})
+			>>> ballot2 = Ballot({2: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+			>>> race.numOfRunners()
+			2
+			>>> race.runStepExecutives() 		# Apply first ballot
+			1
+			>>> race.runStepExecutives() 		# Apply second ballot
+			1
+			>>> race.runStepExecutives() 		# Make tyrion win
+			2
+			>>> race.numOfRunners() 			
+			1
+		"""
+		count = 0
+		for candidate in self.candidates:
+			if candidate.state == RUNNING:
+				count += 1
+		return count
+
+	def numOfWinners(self):
+		"""Return the number of candidates who won the race.
+			@parameter: None
+			@return: number_of_runners (int)
+
+			>>> ballot1 = Ballot({2: [101]})
+			>>> ballot2 = Ballot({2: [101]})
+			>>> tyrion = Candidate(101, 'Tyrion', 2, 'Lanister')
+			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
+			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
+			>>> race.numOfWinners()
+			0
+			>>> race.runStepExecutives() 		# Apply first ballot
+			1
+			>>> race.runStepExecutives() 		# Apply second ballot
+			1
+			>>> race.runStepExecutives() 		# Make tyrion win
+			2
+			>>> race.numOfWinners() 			
+			1
+		"""
+		count = 0
+		for candidate in self.candidates:
+			if candidate.state == WIN:
+				count += 1
+		return count
 
 	def applyCurrentBallot(self):
 		"""Count current ballot. If candidate loses, redistribute ballots.
@@ -278,6 +354,8 @@ class Race:
 			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
 		"""
 		ballot = self.current_ballots.pop(0)
+		while ballot and ballot.votes == [] and ballot.votes[self.position] == [] and ballot.votes[self.position][0] in self.removedCandidates:
+			ballot.votes[self.position].pop(0)
 		if ballot.candidate and ballot.candidate.state == LOSE:
 			ballot.candidate.score -= ballot.value
 		self.applyBallot(ballot)
@@ -322,7 +400,7 @@ class Race:
 
 		while True:
 			if not vote:
-				self.spentBallots += ballot.value		# What is spentBallots? Why add ballot.value?
+				self.spentBallots += ballot.value		# People who didn't vote
 				return False
 			candidate_num = int(vote.pop(0))			# Pop off the current top candidate
 			if candidate_num not in self.numToCandidate.keys():
@@ -362,9 +440,10 @@ class Race:
 			[102, 101]
 		"""
 		removedCandidatesNum = []
-		self.candidates.sort(key=lambda x: -1 * x.score) 		# Sorts candidates from lowest score to highest score
+		current_runners = self.currentRunners()
+		current_runners.sort(key=lambda x: -1 * x.score) 		# Sorts candidates from lowest score to highest score
 		worst_score = sys.maxint
-		for candidate in reversed(self.candidates):
+		for candidate in reversed(current_runners):
 			if candidate.state == RUNNING and candidate.score <= worst_score:
 				self.current_ballots += candidate.ballots
 				candidate.state = LOSE
@@ -397,7 +476,7 @@ class Race:
 			if self.numOfRunners() == 0:
 				raise ElectionError('There is a tie!')
 		else:
-			if len(self.current_winners) + len(self.current_runners) < NUM_SENATORS:
+			if self.numOfWinners() + self.numOfRunners() < NUM_SENATORS:
 				raise ElectionError('There is a tie!')
 
 	def removeCandidate(self, candidate_num):
@@ -412,14 +491,24 @@ class Race:
 			>>> ned = Candidate(102, 'Ned', 2, 'Stark')
 			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
 			>>> race.removeCandidate(101)
+			101
+			>>> race.removedCandidates
+			[101]
 			>>> race.runStepExecutives() 		# Applies ballot1
 			1
-			>>> race.runStepExecutives()
+			>>> tyrion.score
+			0
+			>>> ned.score
 			1
+			>>> race.runStepExecutives() 		# Applies ballot2
+			1
+			>>> race.runStepExecutives() 		# Makes ned WIN
+			2
 		"""
 		if type(candidate_num) != int:
 			raise ValueError("Input must be a int.")
-
+		self.removedCandidates.append(candidate_num)
+		return candidate_num
 
 
 class ElectionError(Exception):
