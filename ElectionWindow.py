@@ -178,6 +178,9 @@ class ElectionFrame(wx.Frame):
         elif (self.toCompletion):
             self.redistribute()
 
+    def delete(self):
+        house = full
+
     def complete(self):
         self.toCompletion = True
         self.redistribute()
@@ -353,6 +356,10 @@ class InfoPanel(wx.Panel):
         self.GetSizer().Add(self.positionComboBox, 0, wx.TOP | wx.LEFT, 15)
         self.Bind(wx.EVT_COMBOBOX, self.changeRace)
 
+        self.deleteButton = wx.Button(self, wx.ID_ANY, label='Delete', size=(100,25))
+        self.GetSizer().Add(self.deleteButton, 0, wx.TOP | wx.LEFT, 15)
+        self.Bind(wx.EVT_BUTTON, self.delete, self.deleteButton)
+
         self.redistributeButton = wx.Button(self, wx.ID_ANY, label='Redistribute', size=(100,25))
         self.GetSizer().Add(self.redistributeButton, 0, wx.TOP | wx.LEFT, 15)
         self.Bind(wx.EVT_BUTTON, self.redistribute, self.redistributeButton)
@@ -387,6 +394,8 @@ class InfoPanel(wx.Panel):
     def complete(self, evt):
         self.frame.complete()
         pass
+    def delete(self, evt):
+        self.frame.delete()
 
     def resetQuotaLabel(self):
         self.quotaText.SetLabel('QUOTA (Score to WIN): ' + str(self.quota))
