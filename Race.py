@@ -42,6 +42,8 @@ class Race:
 		self.winners = 0
 		self.spentBallots = 0
 		self.iterationNumber = 0
+
+		self.currentCandidates = candidates
 		
 		self.finished = False
 		self.current_ballots = ballots
@@ -508,6 +510,8 @@ class Race:
 		if type(candidate_num) != int:
 			raise ValueError("Input must be a int.")
 		self.removedCandidates.append(candidate_num)
+		# for candidate in self.currentCandidates:
+		# 	self.currentCandidates.remove(candidate)
 		return candidate_num
 
 
