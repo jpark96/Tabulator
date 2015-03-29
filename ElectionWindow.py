@@ -179,7 +179,15 @@ class ElectionFrame(wx.Frame):
             self.redistribute()
 
     def delete(self):
-        house = full
+        toDelete = wx.TextEntryDialog(None, 'Please enter the number of the candidate you wish to remove', 'Race Removal'," ", wx.OK)
+        toDelete.ShowModal()
+        deleteNumber = int(toDelete.GetValue())
+        self.election.race.removeCandidate(deleteNumber)
+        if (deleteNumber in self.election.race.removedCandidates):
+            print ("The candidate has been Successfully removed from the logic!")
+        for num in self.election.race.removedCandidates:
+            print(num)
+        
 
     def complete(self):
         self.toCompletion = True
@@ -189,6 +197,7 @@ class ElectionFrame(wx.Frame):
     def electionsCompleted(self):
         finished = wx.MessageDialog(None, 'Elections Completed!', '', wx.OK | wx.ICON_EXCLAMATION)
         finished.ShowModal()
+
 
 class CandidatesPanel(scrolled.ScrolledPanel):
     def __init__(self, parent, candidates, frame):
