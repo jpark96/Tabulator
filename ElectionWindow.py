@@ -69,9 +69,6 @@ class ElectionFrame(wx.Frame):
         # Start an Election
         self.election = Election(self)
 
-        #Assign a current race
-        self.race = self.election.race
-
         # Initialize Candidates Panel (with no candidates since no file has been loaded)
         self.candidatesPanel = wx.Panel(self.backgroundPanel)
         self.candidatesPanel.SetBackgroundColour((220,220,220))
@@ -86,10 +83,7 @@ class ElectionFrame(wx.Frame):
     def replaceRace(self):
         # Replace candidates panel with new
         self.candidatesPanel.Destroy()
-        if self.race == None:
-            self.candidatesPanel = CandidatesPanel(self.backgroundPanel, self.election.candidates[self.position], self)
-        else:
-            self.candidatesPanel = CandidatesPanel(self.backgroundpane, self.race.currentCandidates, self)
+        self.candidatesPanel = CandidatesPanel(self.backgroundPanel, self.election.candidates[self.position], self)
         self.candidatesPanel.SetBackgroundColour((220,220,220))
         self.backgroundPanel.GetSizer().Insert(0,self.candidatesPanel, 1, wx.EXPAND | wx.ALL, 3)
         self.backgroundPanel.Layout()
