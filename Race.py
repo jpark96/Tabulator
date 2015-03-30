@@ -356,7 +356,7 @@ class Race:
 			>>> race = Race(None, 2, [tyrion, ned], [ballot1, ballot2])
 		"""
 		ballot = self.current_ballots.pop(0)
-		while ballot and ballot.votes == [] and ballot.votes[self.position] == [] and ballot.votes[self.position][0] in self.removedCandidates:
+		while ballot and ballot.votes and ballot.votes[self.position] != [] and int(ballot.votes[self.position][0]) in self.removedCandidates:
 			ballot.votes[self.position].pop(0)
 		if ballot.candidate and ballot.candidate.state == LOSE:
 			ballot.candidate.score -= ballot.value
