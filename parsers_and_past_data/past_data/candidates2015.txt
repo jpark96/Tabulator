@@ -1,0 +1,59 @@
+1,11,4, ‘Fineman’ , ‘the First’ , NULL , ‘Jake’
+1,12,1, ‘Jaber’ , NULL , NULL , ‘Nic’
+1,13,2, ‘Dejen’ , NULL , NULL , ‘Yordanos’
+1,14,7, ‘Chaurasia’ , NULL , ‘Kumar’ , ‘Pranay’
+1,15,6, ‘Razavi’ , NULL , NULL , ‘Milad’
+1,16,5, ‘Cortez-Mejia’ , NULL , NULL , ‘Michael’
+2,21,2, ‘Jawaharlal’ , NULL , NULL , ‘Lavanya’
+2,22,6, ‘Lee’ , NULL , NULL , ‘Paul’
+2,23,4, ‘Yang’ , ‘Silent Majority’ , NULL , ‘Tom’
+3,31,4, ‘Heinz’ , ‘Actual Hermit Crab’ , NULL , ‘Sam’
+3,32,6, ‘Ramesh’ , NULL , ‘A.’ , ‘Vinay’
+3,33,2, ‘Navid’ , NULL , NULL , ‘Marium’
+4,41,4, ‘Sosnovskaya’ , ‘BobbyRPartyR’ , NULL , ‘Yevgeniya’
+4,42,1, ‘Walker’ , NULL , NULL , ‘Jay’
+4,43,2, ‘Hsu’ , NULL , NULL , ‘Melissa’
+5,51,1, ‘Romm’ , ‘SA CS SQUELCH! endorsed’ , NULL , ‘Leah’
+5,52,5, ‘Huntley-Ortega’ , NULL , NULL , ‘Bianca’
+6,101,1, ‘Zhevel’ , ‘Go Bears’ , NULL , ‘Eric’
+6,102,1, ‘Din’ , NULL , NULL , ‘Sumayyah’
+6,103,1, ‘Salinas’ , NULL , NULL , ‘Cuahuctemoc’
+6,104,1, ‘Holtzer’ , NULL , NULL , ‘Matt’
+6,201,2, ‘Llave’ , NULL , NULL , ‘Benedict’
+6,202,2, ‘Tran’ , NULL , NULL , ‘Kathy’
+6,203,2, ‘Wantah’ , NULL , NULL , ‘Gaby’
+6,204,2, ‘Aliabadi’ , NULL , NULL , ‘Arya’
+6,205,2, ‘Evanko’ , NULL , NULL , ‘Kyle’
+6,206,2, ‘Chugh’ , NULL , NULL , ‘Aanchal’
+6,207,2, ‘Ayabe’ , NULL , NULL , ‘Haruko’
+6,208,2, ‘Adrianson’ , NULL , NULL , ‘Wes’
+6,209,2, ‘Baek’ , NULL , NULL , ‘Ji-hern’
+6,210,2, ‘Vicente’ , NULL , NULL , ‘Boomer’
+6,211,2, ‘Banks’ , NULL , NULL , ‘Alana’
+6,212,2, ‘FONG’ , NULL , NULL , ‘WAYLAND’
+6,213,2, ‘Cho’ , ‘ENGINEER’ , NULL , ‘Reia’
+6,214,2, ‘Nguyen’ , NULL , NULL , ‘Diana’
+6,215,2, ‘Alvarez’ , NULL , NULL , ‘Violeta’
+6,301,3, ‘Paul’ , NULL , NULL , ‘Sheena’
+6,401,4, ‘Shakibnia’ , ‘Venti’ , NULL , ‘Ariana’
+6,402,4, ‘Rashidi’ , ‘Talk Nerdy to Me’ , NULL , ‘Sina’
+6,403,4, ‘Brouns’ , ‘Big Balloons’ , NULL , ‘Zoe’
+6,501,5, ‘Cortez-Mejia’ , NULL , NULL , ‘Michael’
+6,502,5, ‘Huntley’ , NULL , NULL , ‘Bianca’
+6,503,5, ‘Johnson’ , NULL , NULL , ‘Natasha’
+6,504,5, ‘Corona’ , NULL , NULL , ‘Benny’
+6,601,6, ‘Yankelevits’ , NULL , NULL , ‘Adam’
+6,602,6, ‘Wein’ , NULL , NULL , ‘Alex’
+6,603,6, ‘Lau’ , NULL , NULL , ‘Alicia’
+6,604,6, ‘Upadhyay’ , NULL , NULL , ‘Aman’
+6,605,6, ‘LUU’ , NULL , NULL , ‘ANDRE’
+6,606,6, ‘O'Connell’ , NULL , NULL , ‘Carson’
+6,607,6, ‘Kim’ , NULL , ‘Ho Jung’ , ‘Grace’
+6,608,6, ‘Zamora’ , NULL , NULL , ‘James’
+6,609,6, ‘Tang’ , NULL , NULL , ‘Jason’
+6,610,6, ‘Prasad’ , ‘Engineer’ , NULL , ‘Karthik’
+6,611,6, ‘Martinez’ , NULL , NULL , ‘Leilanie’
+6,612,6, ‘Schuster’ , NULL , NULL , ‘Rachel’
+6,613,6, ‘Kim’ , NULL , NULL , ‘Swan’
+6,614,6, ‘Morrow’ , NULL , NULL , ‘Will’
+6,615,6, ‘Azizi’ , NULL , NULL , ‘Zamzama’
